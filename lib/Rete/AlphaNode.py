@@ -251,12 +251,16 @@ class AlphaNode(Node):
     def __repr__(self):
         return "<AlphaNode: %s. Feeds %s beta nodes>"%(repr(self.triplePattern),len(self.descendentBetaNodes))
 
-    def activate(self,aReteToken):
+    def activate(self,aReteToken,explicitSuccessors2Activate=None):
         from BetaNode import PartialInstanciation, LEFT_MEMORY, RIGHT_MEMORY, LEFT_UNLINKING
         #print aReteToken.asTuple()
         #aReteToken.debug = True
         aReteToken.bindVariables(self)
         for memory in self.descendentMemory:
+            if explicitSuccessors2Activate is not None and memory.successor not in explicitSuccessors2Activate:
+                if aReteToken.debug:
+                    print "Skipping per to user specification: ", memory.successor 
+                continue
             singleToken = PartialInstanciation([aReteToken],consistentBindings=aReteToken.bindingDict.copy())
 #            print memory
 #            print self
@@ -290,7 +294,6 @@ class AlphaNode(Node):
 #                        print "\t reattached memory ",str(disconnectedMemory) 
                     memory.successor.memories[LEFT_MEMORY] = disconnectedMemory                    
                     node.descendentBetaNodes.add(memory.successor)
-                    #print memory.successor.memories[LEFT_MEMORY]
                     memory.successor.propagate(RIGHT_MEMORY,aReteToken.debug,wme=aReteToken)                    
                     #node._activate(singleToken,aReteToken.debug)
                     #print "Activating re-linked node", node

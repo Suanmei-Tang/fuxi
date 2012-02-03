@@ -359,6 +359,27 @@ class Uniterm(QNameManager,Atomic):
         return [self.op]+self.arg
             
     terms = property(_get_terms)
+
+    def unify(self,otherLit):
+        """
+        Takes another (ground) Uniterm and returns the substitutions that need to be applied
+        to this (non-ground) one to convert to the other (i.e., unifies the two)
+        
+        >>> x = Variable('X')
+        >>> y = Variable('Y')
+        >>> lit1 = Uniterm(RDF.type,[RDFS.comment,x])
+        >>> lit2 = Uniterm(RDF.type,[RDFS.comment,RDF.Property])
+        >>> lit1.unify(lit2)[x] == RDF.Property
+        True
+        """
+        map = {}
+        if isinstance(self.op,Variable) and self.op != otherLit.op:
+            map[self.op] = otherLit.op
+        if isinstance(self.arg[0],Variable) and self.arg[0] != otherLit.arg[0]:
+            map[self.arg[0]] = otherLit.arg[0]
+        if isinstance(self.arg[1],Variable) and self.arg[1] != otherLit.arg[1]:
+            map[self.arg[1]] = otherLit.arg[1]
+        return map        
             
     def getVarMapping(self,otherLit, reverse=False):
         """
@@ -537,7 +558,7 @@ class ExternalFunction(Uniterm):
     membership, subclassing, or frame. Likewise, External(Expr) is a call to an 
     externally defined function.
     >>> ExternalFunction(Uniterm(URIRef('http://www.w3.org/2000/10/swap/math#greaterThan'),[Variable('VAL'),Literal(2)]))
-    math:greaterThan(?VAL "2"^^<http://www.w3.org/2001/XMLSchema#integer>)
+    math:greaterThan(?VAL 2)
     """
     def __init__(self,builtin,newNss=None):
         from FuXi.Rete.RuleStore import N3RuleStore,N3Builtin

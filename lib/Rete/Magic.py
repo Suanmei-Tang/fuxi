@@ -464,6 +464,9 @@ class AdornedUniTerm(Uniterm):
 
     def clone(self):
         return AdornedUniTerm(self,self.adornment,self.naf)
+        
+    def convert2NormalUterm(self):
+        return buildUniTerm(self.toRDFTuple())
                 
     def makeMagicPred(self):
         """

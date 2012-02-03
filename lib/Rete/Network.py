@@ -21,7 +21,7 @@ from AlphaNode import AlphaNode, ReteToken, SUBJECT, PREDICATE, OBJECT, BuiltInA
 from BuiltinPredicates import FILTERS
 from FuXi.Horn import ComplementExpansion, DATALOG_SAFETY_NONE, \
                       DATALOG_SAFETY_STRICT, DATALOG_SAFETY_LOOSE
-from FuXi.Syntax.InfixOWL import *
+from FuXi.Syntax.InfixOWL import Class, Property, Individual
 from FuXi.Horn.PositiveConditions import Uniterm, SetOperator, Exists, Or, GetUterm
 from FuXi.DLP import MapDLPtoNetwork,non_DHL_OWL_Semantics,IsaFactFormingConclusion
 from FuXi.DLP.ConditionalAxioms import AdditionalRules
@@ -540,30 +540,35 @@ class ReteNetwork:
                             #(even if it is not ground)
                             executeFn(termNode,inferredTriple,tokens,binding,debug)                                        
                         continue
-                    # if rhsTriple[1].find('subClassOf_derived')+1:import pdb;pdb.set_trace()
                     inferredToken=ReteToken(inferredTriple)
                     self.proofTracers.setdefault(inferredTriple,[]).append(binding)
                     self.justifications.setdefault(inferredTriple,set()).add(termNode)
                     if termNode.filter and inferredTriple not in self.filteredFacts:
                         self.filteredFacts.add(inferredTriple)
                     if inferredTriple not in self.inferredFacts and inferredToken not in self.workingMemory:                    
-                        # if (rhsTriple == (Variable('A'), RDFS.RDFSNS['subClassOf_derived'], Variable('B'))):
-                        #     import pdb;pdb.set_trace()                        
                         if debug:
                             print "Inferred triple: ", inferredTriple, " from ",termNode.clauseRepresentation()
                             inferredToken.debug = True
-                        self.inferredFacts.add(inferredTriple)
-                        self.addWME(inferredToken)
-                        currIdx = self.instanciations.get(termNode,0)
-                        currIdx+=1
-                        self.instanciations[termNode] = currIdx
                         if executeFn:
                             #The indicated execute action is supposed to be triggered
                             #when the indicates RHS triple is inferred for the
                             #first time
                             executeFn(termNode,inferredTriple,tokens,binding,debug)
-                        if self.goal is not None and self.goal in self.inferredFacts:
+                        if self.goal is not None and self.goal == inferredTriple:#in self.inferredFacts:
+                            for binding in tokens.bindings:
+                                rt=self.bfp.extractProof(binding,termNode.ruleNo,inferredTriple,applyBindings=True)
+                                def depth(l):
+                                    assert isinstance(l,(tuple))
+                                    if isinstance(l,tuple):
+                                        depths = [depth(item) for item in l[2]]
+                                        return 1 + max(depths) if depths else 1
+                                self.bfp.proof = depth(rt),rt
                             raise InferredGoal("Proved goal " + repr(self.goal))                    
+                        self.inferredFacts.add(inferredTriple)
+                        self.addWME(inferredToken)
+                        currIdx = self.instanciations.get(termNode,0)
+                        currIdx+=1
+                        self.instanciations[termNode] = currIdx                            
                     else:
                         if debug:
                             print "Inferred triple skipped: ", inferredTriple
