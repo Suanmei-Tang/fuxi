@@ -604,6 +604,7 @@ class BackwardFixpointProcedure(object):
             binding = _lit.unify(buildUniTerm(inferredTriple))
         lemmas=[]
         
+        nonSipBindings = None
         #Iterate over subgoals 
         for idx,lit in enumerate(iterCondition(rule.formula.body)):
             #Ground subgoal using bindings to determine the ground
@@ -627,7 +628,7 @@ class BackwardFixpointProcedure(object):
                             if compareAdornedPredToRuleHead(lit,head,self.hybridPredicates) and (
                                 head.adornment == lit.adornment):
                                 matchingRuleIndices.add(_idx)
-                    ans=[]
+                    validEntries=[]
                     for _ruleIdx in matchingRuleIndices:
                         _r = self.rules[_ruleIdx]
                         #For every (matching) rule, scan
@@ -654,25 +655,32 @@ class BackwardFixpointProcedure(object):
                                                 if GetOp(k) == GetOp(nextBody)]
                                     for matchingArgs,provedFact,steps,_sols in matches:
                                         if matchingArgs:
-                                            ans.append((entry,sols,value))
-                    for groundFact,_sols,_proofsInfo in ans:
+                                            validEntries.append((entry,sols,value))
+                    for groundFact,_sols,_proofsInfo in validEntries:
+                        nonSipBindings = _sols
                         assert len(_proofsInfo)==1
+                        foundSoln = False
                         for _rIdx,_bodyPos,_stepType in _proofsInfo:
+                            assert not foundSoln
                             if _stepType == 'Q':
                                 lemmas.append((groundFact,'N/A','EDB Query',[],_sols))
                             elif derivations:
-                                lemmas.append(self.extractProof(sols,int(derivations[0][0])-1,lit.toRDFTuple()))
+                                lemmas.append(self.extractProof(sols,int(derivations[0][0]),lit.toRDFTuple()))
                             else:
-                                lemmas.append(self.extractProof(sols,int(_rIdx)-1,groundFact.toRDFTuple()))
+                                lemmas.append(self.extractProof(sols,int(_rIdx),groundFact.toRDFTuple()))
+                            foundSoln = True
                 else:
                     #Add to the list of lemmas (each of which correponds to a derived subgoal)
                     #the proof for the subgoal by calling extractProof recursively on the
                     #ground subgoal
-                    lemmas.append(self.extractProof(binding,int(derivations[0][0])-1,lit.toRDFTuple()))
+                    lemmas.append(self.extractProof(binding,int(derivations[0][0]),lit.toRDFTuple()))
             else:
+                if nonSipBindings is not None:
+                    lit.ground(nonSipBindings)
                 for subGoal in self.derivationMap.get(lit,set()):
                     if subGoal[2]=='Q':
                         lemmas.append((lit,'Via EDB Query',[],binding))
+        assert len(lemmas) == len(list(iterCondition(rule.formula.body)))
         return (buildUniTerm(inferredTriple),
                 rule,
                 # ', '.join(SIPRepresentation(ruleSipGraph)),
@@ -755,7 +763,7 @@ class BackwardFixpointProcedure(object):
                         conjoinedTokenMem = self.maxEDBFront2End[(idx+1,bodyIdx+1)] 
                             if lazyBaseConjunct else None,
                         edbConj = conjunct if lazyBaseConjunct else singleConj,
-                        originPos=(idx+1,bodyIdx+1))
+                        originPos=(idx,bodyIdx+1))
                         
                 self.evalHash.setdefault((idx+1,bodyIdx),[]).append(newEvalMemory)
                 #If the body predicate is a 2nd order predicate, we don't infer the
