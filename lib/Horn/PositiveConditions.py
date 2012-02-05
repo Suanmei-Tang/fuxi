@@ -490,6 +490,8 @@ class Uniterm(QNameManager,Atomic):
                 return unicode(term)
             else:
                 return term.n3()
+        elif isinstance(term,BNode):
+            return term.n3()
         else:
             return isinstance(term,Variable) and term.n3() or \
                    self.collapseName(term)        
