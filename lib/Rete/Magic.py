@@ -360,6 +360,14 @@ def AdornRule(derivedPreds,
 def BasePredicateFromHybrid(pred):
     return URIRef(pred[:-8])
 
+def IsHybridPredicateRule(rule,derivedSuffix='derived'):
+    fullSuffix = '_'+derivedSuffix
+    basePred = URIRef(GetOp(rule.formula.head).split(fullSuffix)[0])
+    return GetOp(
+        rule.formula.head).find(fullSuffix)+1 and len(
+            list(iterCondition(rule.formula.body)))==1 and \
+            GetOp(list(iterCondition(rule.formula.body))[0]) == basePred
+
 def IsHybridPredicate(pred,hybridPreds2Replace):
     op = GetOp(pred)
     return op[-7:] == 'derived' and op[:-8] in hybridPreds2Replace
@@ -507,16 +515,17 @@ class AdornedUniTerm(Uniterm):
                     return True
         return False
                 
-    def getDistinguishedVariables(self,varsOnly=False):
+    def getDistinguishedVariables(self,varsOnly=False,bound=True):
+        adornment2Compare = 'b' if bound else 'f'
         if self.op == RDF.type:
             for idx,term in enumerate(GetArgs(self)):
-                if self.adornment[idx]=='b':
+                if self.adornment[idx]==adornment2Compare:
                     if not varsOnly or isinstance(term,Variable):
                         yield term
         else:
             for idx,term in enumerate(self.arg):
                 try:
-                    if self.adornment[idx]=='b':
+                    if self.adornment[idx]==adornment2Compare:
                         if not varsOnly or isinstance(term,Variable):
                             yield term
                 except IndexError: pass

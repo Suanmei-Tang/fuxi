@@ -259,7 +259,7 @@ class AlphaNode(Node):
         for memory in self.descendentMemory:
             if explicitSuccessors2Activate is not None and memory.successor not in explicitSuccessors2Activate:
                 if aReteToken.debug:
-                    print "Skipping per to user specification: ", memory.successor 
+                    print "Skipping (per user specification) activation of join node: ", memory.successor
                 continue
             singleToken = PartialInstanciation([aReteToken],consistentBindings=aReteToken.bindingDict.copy())
 #            print memory

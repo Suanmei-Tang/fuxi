@@ -265,7 +265,7 @@ class ConjunctiveQueryMemoize(object):
                 try:
                     dump = pickle.dumps(key)
                 except pickle.PicklingError:
-                    for item in func(*args, **kwds):
+                    for item in func(queryExecAction,conjQuery):
                         yield item
                 else:
                     if dump in self._cache:

@@ -160,7 +160,9 @@ class ReteNetwork:
                  nsMap = {},
                  graphVizOutFile=None,
                  dontFinalize=False,
-                 goal=None):
+                 goal=None,
+                 rulePrioritizer=None,
+                 alphaNodePrioritizer=None):
         self.leanCheck = {}
         self.goal = goal        
         self.nsMap = nsMap
@@ -189,6 +191,8 @@ class ReteNetwork:
         if not dontFinalize:
             self.ruleStore._finalize()
         self.filteredFacts = Graph()
+        self.rulePrioritizer      = rulePrioritizer
+        self.alphaNodePrioritizer = alphaNodePrioritizer
         
         #'Universal truths' for a rule set are rules where the LHS is empty.  
         # Rather than automatically adding them to the working set, alpha nodes are 'notified'
@@ -515,7 +519,9 @@ class ReteNetwork:
                     if not isinstance(rule.formula.body,Exists) or \
                        bN not in rule.formula.body.declare:
                        BNodeReplacement[bN] = BNode()
-        for rhsTriple in termNode.consequent:
+        consequents = self.rulePrioritizer(termNode.consequent
+            ) if self.rulePrioritizer else termNode.consequent
+        for rhsTriple in consequents:
             if BNodeReplacement:
                 rhsTriple = tuple([BNodeReplacement.get(term,term) for term in rhsTriple])
             if debug:
@@ -556,13 +562,13 @@ class ReteNetwork:
                             executeFn(termNode,inferredTriple,tokens,binding,debug)
                         if self.goal is not None and self.goal == inferredTriple:#in self.inferredFacts:
                             for binding in tokens.bindings:
-                                rt=self.bfp.extractProof(binding,termNode.ruleNo,inferredTriple,applyBindings=True)
+                                rt=None#self.bfp.extractProof(binding,termNode.ruleNo,inferredTriple,applyBindings=True)
                                 def depth(l):
                                     assert isinstance(l,(tuple))
                                     if isinstance(l,tuple):
                                         depths = [depth(item) for item in l[2]]
                                         return 1 + max(depths) if depths else 1
-                                self.bfp.proof = depth(rt),rt
+                                self.bfp.proof = -1,rt#depth(rt),rt
                             raise InferredGoal("Proved goal " + repr(self.goal))                    
                         self.inferredFacts.add(inferredTriple)
                         self.addWME(inferredToken)
@@ -593,14 +599,22 @@ class ReteNetwork:
             if alpha-mem then alpha-memory-activation (alpha-mem, w)
         end        
         """
-#        print wme.asTuple()       
-        for termComb,termDict in iteritems(self.alphaPatternHash):
-            for alphaNode in termDict.get(wme.alphaNetworkHash(termComb),[]):
-#                print "\t## Activated AlphaNode ##"
-#                print "\t\t",termComb,wme.alphaNetworkHash(termComb)
-#                print "\t\t",alphaNode
-                alphaNode.activate(wme.unboundCopy())
-    
+#        print wme.asTuple()
+        #If the user provided a function that enforces an ordering in the
+        # evaluation of alpha nodes, then we use this ordering or the 'natural'
+        # ordering otherwise
+        aNodes = reduce(
+            lambda l,r:l+r,
+            filter(lambda i:i,
+                   map(lambda (termComb,termDict): termDict.get(wme.alphaNetworkHash(termComb),[]) ,
+                       iteritems(self.alphaPatternHash))))
+        sortedANodes = self.alphaNodePrioritizer(aNodes) if self.alphaNodePrioritizer else aNodes
+        for alphaNode in sortedANodes:
+#            print "\t## Activated AlphaNode ##"
+#            print "\t\t",termComb,wme.alphaNetworkHash(termComb)
+#            print "\t\t",alphaNode
+            alphaNode.activate(wme.unboundCopy())
+
     def feedFactsToAdd(self,tokenIterator):
         """
         Feeds the network an iterator of facts / tokens which are fed to the alpha nodes 
