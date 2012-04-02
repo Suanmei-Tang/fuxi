@@ -553,6 +553,9 @@ class BackwardFixpointProcedure(object):
         self.hybridPredicateRuleNos = set()
         self.edbQueries            = set()
         self.goalSolutions         = set()
+        self.evalHash   = {}
+        self.actionHash = {}
+        self.productions= {}
 
     def answers(
         self,
@@ -968,10 +971,7 @@ class BackwardFixpointProcedure(object):
                                       cmp=sortBFPRules)]
             for _ruleStr in sortedBFPRules:
                 print _ruleStr
-            self.evalHash   = {}
-        self.actionHash = {}
         evalVars        = {}
-        self.productions= {}
         for idx,rule in enumerate(self.rules):
             if rule in self.discardedRules:
                 continue                
