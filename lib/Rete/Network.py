@@ -146,7 +146,7 @@ class InferredGoal(Exception):
     def __init__(self, msg):
         self.msg = msg
     def __repr__(self):
-        return "Goal inferred!: %"%self.msg         
+        return "Goal inferred!: %s"%self.msg
 
 class ReteNetwork:
     """
@@ -568,7 +568,9 @@ class ReteNetwork:
                                     if isinstance(l,tuple):
                                         depths = [depth(item) for item in l[2]]
                                         return 1 + max(depths) if depths else 1
-                                self.bfp.proof = -1,rt#depth(rt),rt
+                                #self.bfp.proof = -1,rt#depth(rt),rt
+                            if debug:
+                                "Proved goal " + repr(self.goal)
                             raise InferredGoal("Proved goal " + repr(self.goal))                    
                         self.inferredFacts.add(inferredTriple)
                         self.addWME(inferredToken)
@@ -607,7 +609,7 @@ class ReteNetwork:
             lambda l,r:l+r,
             filter(lambda i:i,
                    map(lambda (termComb,termDict): termDict.get(wme.alphaNetworkHash(termComb),[]) ,
-                       iteritems(self.alphaPatternHash))))
+                       iteritems(self.alphaPatternHash))),[])
         sortedANodes = self.alphaNodePrioritizer(aNodes) if self.alphaNodePrioritizer else aNodes
         for alphaNode in sortedANodes:
 #            print "\t## Activated AlphaNode ##"

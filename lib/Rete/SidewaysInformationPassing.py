@@ -207,6 +207,7 @@ def getOccurrenceId(uniterm,lookup={}):
     return pO
         
 def findFullSip((rt,vars),right):
+    right = right.formulae if isinstance(right,And) else right
     if not vars:
         if len(rt)==1:
             vars=GetArgs(rt[0],secondOrder=True)
@@ -298,7 +299,12 @@ def BuildNaturalSIP(clause,
             foundSip = False
             sips = findFullSip(([clause.head],None), clause.body)
             while not foundSip:
-                sip = sips.next()
+                try:
+                    sip = sips.next()
+                except StopIteration:
+                    #Throw SIP exception if sip isn't found (probably means
+                    #query + rules combination is 'malformed')
+                    raise InvalidSIPException("Unable to find a sip for %s (%s)"%(clause,adornedHead))
                 try:
                     reduce(collectSip,
                            iterCondition(And(sip)))

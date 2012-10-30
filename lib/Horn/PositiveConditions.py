@@ -99,7 +99,10 @@ class And(QNameManager,SetOperator,Condition):
         """
         return first(itertools.ifilter(lambda conj: conj.binds(var),
                                        self.formulae)) is not None
-        
+
+    def __getitem__(self, item):
+        return self.formulae[item]
+
     def isSafeForVariable(self,var):
         """
         A variable, v is safe in a condition formula if and only if ..
@@ -301,6 +304,12 @@ class Uniterm(QNameManager,Atomic):
                 self.nsMgr.bind(k,v)
         self._hash=hash(reduce(lambda x,y:str(x)+str(y),
             len(self.arg)==2 and self.toRDFTuple() or [self.op]+self.arg))
+        self.herbrand_hash=hash(
+            reduce(
+                lambda x,y:str(x)+str(y),
+                filter(lambda i:not isinstance(i,Variable),
+                    self.toRDFTuple() if len(self.arg)==2
+                    else [self.op]+self.arg),None))
 
     def binds(self, var):
         """

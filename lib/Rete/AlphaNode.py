@@ -253,15 +253,17 @@ class AlphaNode(Node):
 
     def activate(self,aReteToken,explicitSuccessors2Activate=None):
         from BetaNode import PartialInstanciation, LEFT_MEMORY, RIGHT_MEMORY, LEFT_UNLINKING
-        #print aReteToken.asTuple()
-        #aReteToken.debug = True
+        explicitSuccessors2Activate = [] if explicitSuccessors2Activate is None\
+                                         else explicitSuccessors2Activate
         aReteToken.bindVariables(self)
         for memory in self.descendentMemory:
-            if explicitSuccessors2Activate is not None and memory.successor not in explicitSuccessors2Activate:
+            if explicitSuccessors2Activate and memory.successor not in explicitSuccessors2Activate:
                 if aReteToken.debug:
                     print "Skipping (per user specification) activation of join node: ", memory.successor
                 continue
-            singleToken = PartialInstanciation([aReteToken],consistentBindings=aReteToken.bindingDict.copy())
+            singleToken = PartialInstanciation(
+                            [aReteToken],
+                            consistentBindings=aReteToken.bindingDict.copy())
 #            print memory
 #            print self
 #            print self.descendentMemory

@@ -107,7 +107,14 @@ def coroutine(func):
     return start
                 
 class GoalSolutionAction(object):
+    def getGroundTerms(self,literal):
+        goalGroundTerms = {}
+        for idx,term in enumerate(GetArgs(literal)):
+            if not isinstance(term,Variable):
+                goalGroundTerms[idx] = term
+        return goalGroundTerms
     def __init__(self, bfp, varMap):
+        self.goalGroundTerms = self.getGroundTerms(bfp.goal)
         self.bfp = bfp
         self.varMap = varMap
         self.solutionSet = set()
@@ -118,13 +125,27 @@ class GoalSolutionAction(object):
         Called when the BFP triggers a p-node associated with a goal
         , storing the solutions for later retrieval
         """
-        self.bfp.goalSolutions.add(
-            MakeImmutableDict(
-                dict(
-                    [(self.varMap[key],binding[key]) 
-                        for key in binding
-                          if key in self.varMap])))
-                
+        if not self.goalGroundTerms or not filter(
+                lambda (i,t): self.goalGroundTerms.get(i,t) != t,
+                enumerate(GetArgs(BuildUnitermFromTuple(inferredTriple)))
+            ):
+            #Only contributes to goal if bound arguments correspond to those
+            #bound in the goal literal
+            if set(self.varMap).intersection(binding):
+                #If there are variables to be mapped only consider those as solutions
+                self.bfp.goalSolutions.add(
+                    MakeImmutableDict(
+                        dict(
+                            [(self.varMap[key],binding[key])
+                                for key in binding
+                                  if key in self.varMap])))
+            else:
+                #If there are no variables to map, then pass on the bindings
+                # as solution
+                self.bfp.goalSolutions.add(MakeImmutableDict(binding))
+            if self.bfp.debug:
+                print "added %s to goal solutions"%binding
+
 class EvaluateExecution(object):
     """Handles the inference of evaluate literals in BFP"""
     def __init__(self, (ruleNo,bodyIdx),bfp,termNodes):
@@ -297,8 +318,9 @@ class QueryExecution(object):
                     map(lambda item:set(GetVariables(item)),
                         _qLit.formulae)
                 )
-                _qLit.returnVars = list(set(self.freeHeadVars).intersection(queryVars))
-#                print _qLit.asSPARQL()
+                #@TODO: Verify we don't always want to limit passing of
+                # intermediate query answers to just those relevant to head solns
+#                _qLit.returnVars = list(set(self.freeHeadVars).intersection(queryVars))
 
                 if self.bfp.debug:
                     print "%sQuery triggered for "%(
@@ -325,7 +347,8 @@ class QueryExecution(object):
                                                ({},binding))
                 else:
                     for ans in rt:
-                        if self.bfp.debug: pprint(ans)
+                        if self.bfp.debug:
+                            pprint(ans)
                         self.handleQueryAnswer(origQuery,
                                                token,
                                                self.bfp.debug,
@@ -963,7 +986,7 @@ class BackwardFixpointProcedure(object):
                 elif len(item1) == 2:
                     return -1 if item1[0] == 'b' else 1 if item1[0] == 'a' else 0
                 else:
-                    import pdb;pdb.set_trace()
+                    raise Exception(u'problems comparing %s and %s'%(item1,item))
             sortedBFPRules =[
                 str("%s : %s")%(key,self.bfpLookup[key])
                     for key in sorted(self.bfpLookup,
