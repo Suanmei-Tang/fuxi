@@ -224,8 +224,15 @@ def main():
                   default=[],
                   metavar='PATH_OR_URI',
       help = 'The path to an OWL RDF/XML graph to use DLP to extract rules from '+
-      '(other wise, fact graph(s) are used)  ') 
-      
+      '(other wise, fact graph(s) are used)  ')
+
+    op.add_option('--ruleFormat',
+        default='n3',
+        dest='ruleFormat',
+        metavar='RULE_FORMAT',
+        choices = ['n3', 'rif'],
+        help = "The format of the rules to parse ('n3', 'rif').  The default is %default")
+
     op.add_option('--ontologyFormat', 
                 default='xml',
                 dest='ontologyFormat',
@@ -270,9 +277,19 @@ def main():
             userFuncs = imp.load_source('builtins', options.builtins)
             rs = HornFromN3(fileN,
                             additionalBuiltins=userFuncs.ADDITIONAL_FILTERS)
+            nsBinds.update(rs.nsMapping)
+        elif options.ruleFormat == 'rif':
+            try:
+                from FuXi.Horn.RIFCore import RIFCoreParser
+                rif_parser = RIFCoreParser(location=fileN,debug=options.debug)
+                rs = rif_parser.getRuleset()
+            except ImportError, e:
+                raise Exception(
+                    "Missing 3rd party libraries for RIF processing: %s"%e
+                )
         else:
             rs = HornFromN3(fileN)
-        nsBinds.update(rs.nsMapping)
+            nsBinds.update(rs.nsMapping)
         ruleSet.formulae.extend(rs)
         #ruleGraph.parse(fileN,format='n3')
 
