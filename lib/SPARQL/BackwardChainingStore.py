@@ -213,7 +213,6 @@ class TopDownSPARQLEntailingStore(Store):
             return tp
 
     def hybridPredicatePreparation(self,nsMapping=None):
-        assert len(self.idb)
         new_rules = map(copy.deepcopy,self.idb)
         ReplaceHybridPredcates(new_rules,self.hybridPredicates)
         for hybrid_predicate in self.hybridPredicates:
