@@ -7,6 +7,7 @@ from FuXi.Rete.RuleStore import *
 from FuXi.Rete.Proof import ImmutableDict
 from FuXi.Rete.Magic import AdornedUniTerm
 from rdflib import URIRef, RDF, Namespace, Variable, Literal
+from rdflib.syntax.xml_names import split_uri
 from rdflib.util import first
 from FuXi.Rete.BetaNode import project
 from FuXi.Rete.SidewaysInformationPassing import GetArgs, iterCondition, GetOp, GetVariables

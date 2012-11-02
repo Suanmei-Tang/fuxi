@@ -52,6 +52,24 @@ SELECT DISTINCT ?impl ?body ?bodyType ?head ?headType {
 }
 """
 
+MEMBER_PARTS =\
+"""
+SELECT DISTINCT ?member ?class ?instance {
+    ?member     a             rif:Member;
+                rif:class     ?class;
+                rif:instance  ?instance
+}"""
+
+EXISTS_PARTS =\
+"""
+SELECT DISTINCT ?exists ?formula ?formulaType ?vars {
+    ?exists     a             rif:Exists;
+                rif:vars      ?vars;
+                rif:formula   ?formula .
+    ?formula    a             ?formulaType
+}
+"""
+
 RULE_PARTS =\
 """
 SELECT DISTINCT ?rule ?vars ?impl {
@@ -90,7 +108,8 @@ SELECT ?atom ?args ?op {
 rif_namespaces = { u'rif':RIF_NS }
 
 class RIFCoreParser(object):
-    def __init__(self,location=None,graph=None,debug=False):
+    def __init__(self,location=None,graph=None,debug=False,nsBindings = None):
+        self.nsBindings = nsBindings if nsBindings else {}
         self.location = location
         self.rules = {}
         if graph:
@@ -111,7 +130,10 @@ class RIFCoreParser(object):
                 f = opener.open(req)
                 self.content = f.read()
             else:
-                self.content = urllib2.urlopen(self.location).read()
+                try:
+                    self.content = urllib2.urlopen(self.location).read()
+                except ValueError:
+                    self.content = urllib2.urlopen(iri.os_path_to_uri(self.location)).read()
 #                self.content = open(self.location).read()
             try:
                 rdfContent = transform(self.content,inputsource(TRANSFORM_URI))
@@ -125,6 +147,7 @@ class RIFCoreParser(object):
                     self.graph = Graph().parse(StringIO(self.content),format='n3')
                 if debug:
                     print "Extracted rules from RIF in RDF document"
+        self.nsBindings.update(dict(self.graph.namespaces()))
 
     def getRuleset(self):
         """
@@ -135,6 +158,15 @@ class RIFCoreParser(object):
         >>> parser = RIFCoreParser('http://www.w3.org/2005/rules/test/repository/tc/Guards_and_subtypes/Guards_and_subtypes-premise.rif')
         >>> for rule in parser.getRuleset(): print rule
         """
+        self.members = dict((_member,(_cls,_inst))
+            for _member,_cls,_inst in self.graph.query(MEMBER_PARTS,initNs=rif_namespaces)
+        )
+
+        self.exists = dict((exists,(formula, formulaType, vars))
+            for exists, formula, formulaType, vars in
+                self.graph.query(EXISTS_PARTS,initNs=rif_namespaces)
+        )
+
         self.implications = dict([(impl,(body,bodyType,head,headType))
                                     for impl,body,bodyType,head,headType in
                                         self.graph.query(IMPLIES_PARTS,initNs=rif_namespaces)])
@@ -174,7 +206,7 @@ class RIFCoreParser(object):
             body = self.extractPredication(body,bodyType)
 
         body = And([first(body)]) if len(body) == 1 else And(body)
-        return Rule(Clause(body,head),declare=[])
+        return Rule(Clause(body,head),declare=[],nsMapping=self.nsBindings)
 
     def extractRule(self,rule):
         vars,impl = self.rules[rule]
@@ -192,26 +224,55 @@ class RIFCoreParser(object):
 
         else:
             body = self.extractPredication(body,bodyType)
-
-        body = And([first(body)]) if len(body) == 1 else And(body)
+        if isinstance(body,list):
+            body = And([first(body)]) if len(body) == 1 else And(body)
+        nsMapping = {}
+        nsMapping.update(self.nsBindings)
         return Rule(
             Clause(body,head),
             declare=allVars,
-            nsMapping=dict(self.graph.namespaces())
+            nsMapping=nsMapping
         )
+
+    def extractExists(self,exists_resource):
+        formula, formulaType, vars = self.exists[exists_resource]
+        allVars = map(self.extractTerm,Collection(self.graph,vars))
+
+        if formulaType == RIF_NS.And:
+            formula = And(map(
+                lambda i: first(self.extractPredication(
+                    i,
+                    first(self.graph.objects(i,RDF.type)))
+                ),
+                Collection(self.graph,first(self.graph.objects(formula,RIF_NS.formulas)))
+            ))
+
+        else:
+            formula = self.extractPredication(formula,formulaType)
+        return Exists(formula,allVars)
 
     def extractPredication(self,predication,predType):
         if predType == RIF_NS.Frame:
             return self.extractFrame(predication)
         elif predType == RIF_NS.Atom:
             return [self.extractAtom(predication)]
-        else:
-            assert predType == RIF_NS.External
+        elif predType == RIF_NS.Exists:
+            return [self.extractExists(predication)]
+        elif predType == RIF_NS.Member:
+            _cls,_inst = self.members[predication]
+            return [Uniterm(
+                RDF.type,
+                [self.extractTerm(_inst),
+                 self.extractTerm(_cls)],
+                newNss=self.nsBindings)]
+        elif predType == RIF_NS.External:
 #            N3Builtin(self,uri,func,argument,result)
             args,op = self.externals[predication]
             args    = map(self.extractTerm,Collection(self.graph,args))
             op      = self.extractTerm(op)
             return [ExternalFunction(Uniterm(op,args))]
+        else:
+            raise SyntaxError("Unsupported RIF in RDF type: %s"%predType.n3())
 
     def extractAtom(self,atom):
         args,op = self.atoms[atom]
@@ -221,7 +282,7 @@ class RIFCoreParser(object):
             raise NotImplementedError(
                 "FuXi RIF Core parsing only supports subset involving binary/unary Atoms"
             )
-        return Uniterm(op,args)
+        return Uniterm(op,args,newNss=self.nsBindings)
 
     def extractFrame(self,frame):
         obj,slots = self.frames[frame]
@@ -230,7 +291,7 @@ class RIFCoreParser(object):
             k = self.extractTerm(first(self.graph.objects(slot,RIF_NS.slotkey)))
             v = self.extractTerm(first(self.graph.objects(slot,RIF_NS.slotvalue)))
             rt.append(
-                Uniterm(k,[self.extractTerm(obj),v])
+                Uniterm(k,[self.extractTerm(obj),v],newNss=self.nsBindings)
             )
         return rt
 

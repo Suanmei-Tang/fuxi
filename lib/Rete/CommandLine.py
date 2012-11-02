@@ -281,7 +281,10 @@ def main():
         elif options.ruleFormat == 'rif':
             try:
                 from FuXi.Horn.RIFCore import RIFCoreParser
-                rif_parser = RIFCoreParser(location=fileN,debug=options.debug)
+                rif_parser = RIFCoreParser(
+                    location=fileN,
+                    debug=options.debug,
+                    nsBindings=nsBinds)
                 rs = rif_parser.getRuleset()
             except ImportError, e:
                 raise Exception(

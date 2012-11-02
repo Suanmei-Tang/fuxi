@@ -494,17 +494,9 @@ class Uniterm(QNameManager,Atomic):
             return val
         
     def normalizeTerm(self,term):
-        if isinstance(term,Literal):
-            if term.datatype == _XSD_NS.integer:
-                return unicode(term)
-            else:
-                return term.n3()
-        elif isinstance(term,BNode):
-            return term.n3()
-        else:
-            return isinstance(term,Variable) and term.n3() or \
-                   self.collapseName(term)        
-   
+        from FuXi.SPARQL import renderTerm
+        return renderTerm(Graph(namespace_manager=self.nsMgr),term)
+
     def getArity(self):
         return 1 if self.op == RDF.type else 2
         
