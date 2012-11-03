@@ -81,7 +81,9 @@ def SetupDDLAndAdornProgram(factGraph,
                             strictCheck=DDL_STRICTNESS_FALLBACK_DERIVED,
                             defaultPredicates=None,
                             ignoreUnboundDPreds=False,
-                            hybridPreds2Replace=None):
+                            hybridPreds2Replace=None,
+                            nsBindings = None):
+    nsBindings = nsBindings if nsBindings else {}
     if not defaultPredicates:
         defaultPredicates = [],[]
     if not derivedPreds:
@@ -100,7 +102,8 @@ def SetupDDLAndAdornProgram(factGraph,
                         GOALS,
                         derivedPreds,
                         ignoreUnboundDPreds,
-                        hybridPreds2Replace = hybridPreds2Replace)
+                        hybridPreds2Replace = hybridPreds2Replace,
+                        nsBindings=nsBindings)
 
     if factGraph is not None:
         factGraph.adornedProgram = adornedProgram    
@@ -405,7 +408,8 @@ def AdornProgram(factGraph,
                  goals,
                  derivedPreds=None,
                  ignoreUnboundDPreds=False,
-                 hybridPreds2Replace=None):
+                 hybridPreds2Replace=None,
+                 nsBindings=None):
     """
     The process starts from the given query. The query determines bindings for q, and we replace
     q by an adorned version, in which precisely the positions bound in the query are designated as
@@ -421,12 +425,16 @@ def AdornProgram(factGraph,
     """
     from FuXi.DLP import LloydToporTransformation
     from collections import deque
+    nsBindings = nsBindings if nsBindings else {}
     goalDict = {}
     handled = set()
     hybridPreds2Replace = hybridPreds2Replace or []
     adornedPredicateCollection=set()
-    for goal,nsBindings in NormalizeGoals(goals):
-        adornedPredicateCollection.add(AdornLiteral(goal,nsBindings))
+    for goal,nsMap in NormalizeGoals(goals):
+        _nsBindings = {}
+        _nsBindings.update(nsMap)
+        _nsBindings.update(nsBindings)
+        adornedPredicateCollection.add(AdornLiteral(goal,_nsBindings))
     if not derivedPreds:
         derivedPreds=list(DerivedPredicateIterator(factGraph,rs))
     def unprocessedPreds(aPredCol):
@@ -480,9 +488,13 @@ class AdornedUniTerm(Uniterm):
     def __init__(self,uterm,adornment=None,naf = False):
         self.marked = False
         self.adornment=adornment
-        self.nsMgr=GetUterm(uterm).nsMgr
         newArgs=copy.deepcopy(GetUterm(uterm).arg)
-        super(AdornedUniTerm, self).__init__(GetUterm(uterm).op,newArgs,naf=naf)
+        super(AdornedUniTerm, self).__init__(
+            GetUterm(uterm).op,
+            newArgs,
+            newNss=GetUterm(uterm).nsMgr,
+            naf=naf
+        )
         self.isMagic=False
 
     def clone(self):

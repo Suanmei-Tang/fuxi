@@ -546,7 +546,8 @@ class BackwardFixpointProcedure(object):
                 hybridPredicates = None,
                 debug = False,
                 specialBNodeHandling = None,
-                proofTrace = None):
+                proofTrace = None,
+                nsBindings = None):
         self.proofTrace            = []
         self.derivationMap         = {}
         self.queryAnswer2Atom      = {}
@@ -558,7 +559,6 @@ class BackwardFixpointProcedure(object):
         self.maxEDBFront2End       = {}
         self.queryPredicates       = set()
         self.sipCollection         = sipCollection
-        self.goal                  = BuildUnitermFromTuple(goal)
         self.factGraph             = factGraph
         self.rules                 = list(factGraph.adornedProgram)
         self.discardedRules        = set()
@@ -569,6 +569,13 @@ class BackwardFixpointProcedure(object):
             u'bfp'  : BFP_NS, 
             u'rule' : BFP_RULE 
         }
+
+        if nsBindings:
+            self.namespaces.update(nsBindings)
+
+        self.goal                  = BuildUnitermFromTuple(goal,
+                                                           newNss=self.namespaces)
+
         self.metaInterpNetwork     = network
         self.derivedPredicates     = set(derivedPredicates) if \
            isinstance(derivedPredicates,list) else derivedPredicates
@@ -1161,11 +1168,23 @@ class BackwardFixpointProcedure(object):
                 
     def makeDerivedQueryPredicate(self,predicate):
         if isinstance(predicate,AdornedUniTerm):
-            newAdornedPred=BFPQueryTerm(predicate,predicate.adornment)
+            newAdornedPred=BFPQueryTerm(
+                predicate,
+                predicate.adornment,
+                newNss=self.namespaces
+            )
         elif isinstance(predicate,N3Builtin):
-            newAdornedPred=BFPQueryTerm(predicate,builtin=predicate)
+            newAdornedPred=BFPQueryTerm(
+                predicate,
+                builtin=predicate,
+                newNss=self.namespaces
+            )
         else:
-            newAdornedPred=BFPQueryTerm(predicate,None)
+            newAdornedPred=BFPQueryTerm(
+                predicate,
+                None,
+                newNss=self.namespaces
+            )
         if isinstance(newAdornedPred,Uniterm):
             if isinstance(GetOp(newAdornedPred),Variable):
                 newAdornedPred.setOperator(HIGHER_ORDER_QUERY)
@@ -1332,9 +1351,8 @@ class BackwardFixpointProcedure(object):
 
 
 class BFPQueryTerm(Uniterm):
-    def __init__(self,uterm,adornment=None,naf = False,builtin = None):
+    def __init__(self,uterm,adornment=None,newNss=None,naf = False,builtin = None):
         self.adornment=adornment
-        self.nsMgr=uterm.nsMgr if hasattr(uterm,'nsMgr') else None
         if builtin:
             newArgs=[builtin.argument,builtin.result]
             op = builtin.uri
@@ -1343,10 +1361,16 @@ class BFPQueryTerm(Uniterm):
             newArgs=copy.deepcopy(uterm.arg)
             op = uterm.op
             self.builtin = None
-        super(BFPQueryTerm, self).__init__(op,newArgs,naf=naf)
+        nsMgr = newNss if newNss else uterm.nsMgr if hasattr(uterm,'nsMgr') else None
+        super(BFPQueryTerm, self).__init__(
+            op,
+            newArgs,
+            newNss=nsMgr,
+            naf=naf
+        )
 
     def clone(self):
-        return BFPQueryTerm(self,self.adornment,self.naf)
+        return BFPQueryTerm(self,self.adornment,self.nsMgr,self.naf)
 
     def _recalculateHash(self):
         self._hash=hash(reduce(lambda x,y:str(x)+str(y),

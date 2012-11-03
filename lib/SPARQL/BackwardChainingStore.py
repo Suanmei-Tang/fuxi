@@ -183,7 +183,8 @@ class TopDownSPARQLEntailingStore(Store):
                     tp,
                     sipCollection,
                     hybridPredicates=self.hybridPredicates,
-                    debug=self.DEBUG)
+                    debug=self.DEBUG,
+                    nsBindings=self.nsBindings)
         bfp.createTopDownReteNetwork(self.DEBUG)
         if self.DEBUG:
             print >>sys.stderr, "Goal/Query: ", tp
@@ -204,7 +205,7 @@ class TopDownSPARQLEntailingStore(Store):
                 print >>sys.stderr, "Dispatched query against dataset: ", query.asSPARQL()
 
     def hybridPredQueryPreparation(self,tp):
-        lit = BuildUnitermFromTuple(tp)
+        lit = BuildUnitermFromTuple(tp,newNss=self.nsBindings)
         op = GetOp(lit)
         if op in self.hybridPredicates:
             lit.setOperator(URIRef(op+u'_derived'))
@@ -292,7 +293,8 @@ class TopDownSPARQLEntailingStore(Store):
                     self.idb,
                     [tp],
                     derivedPreds=self.derivedPredicates,
-                    ignoreUnboundDPreds = True)
+                    ignoreUnboundDPreds = True,
+                    nsBindings = self.nsBindings)
 
                 sipCollection=PrepareSipCollection(self.edb.adornedProgram)
                 if self.DEBUG and sipCollection:

@@ -44,8 +44,7 @@ def main():
     op = OptionParser('usage: %prog [options] factFile1 factFile2 ... factFileN')
     op.add_option('--why', 
                   default=None,
-      help = 'Specifies the goals to solve for using the non-niave methods'+
-              'see --method')    
+      help = 'Specifies the goals to solve for')
     op.add_option('--closure', 
                   action='store_true',
                   default=False,
@@ -90,7 +89,7 @@ def main():
     op.add_option('--hybrid',
                   action='store_true',
                   default=False,
-      help = 'Used with with --method=bfp to determine whether or not to '+
+      help = 'Used to determine whether or not to '+
              'peek into the fact graph to identify predicates that are both '+
              'derived and base.  This is expensive for large fact graphs'+
              'and is explicitely not used against SPARQL endpoints')
@@ -159,12 +158,6 @@ def main():
       help = 'Used with --why to specify whether to: *not* check if predicates are '+
       ' both derived and base (loose), if they are, mark as derived (defaultDerived) '+
       'or as base (defaultBase) predicates, else raise an exception (harsh)')    
-    op.add_option('--method',
-                  default='naive',
-                  metavar='reasoning algorithm',
-                  choices = ['gms','bfp','naive'],
-      help = 'Used with --why to specify how to evaluate answers for query.  '+
-      'One of: gms,sld,bfp,naive')
     op.add_option('--firstAnswer',
                   default=False,
                   action='store_true',
@@ -245,10 +238,6 @@ def main():
                   metavar='N3_DOC_PATH_OR_URI',
       help = 'The path to an N3 document associating SPARQL FILTER templates to '+
       'rule builtins')        
-    op.add_option('--negation', 
-                  action='store_true',
-                  default=False,                
-      help = 'Extract negative rules?')    
     op.add_option('--normalForm', 
                   action='store_true',
                   default=False,                
@@ -363,15 +352,11 @@ def main():
                                  ontGraph,
                                  addPDSemantics=options.pDSemantics,
                                  constructNetwork=False,
-                                 ignoreNegativeStratus=options.negation,
                                  safety = safetyNameMap[options.safety]) 
         ruleSet.formulae.extend(dlp)
     if options.output == 'rif' and not options.why:
         for rule in ruleSet:
             print rule
-        if options.negation:
-            for nRule in network.negRules:
-                print nRule
         
     elif options.output == 'man-owl':
         cGraph = network.closureGraph(factGraph,readOnly=False)
@@ -477,58 +462,6 @@ def main():
                 pref,uri=hybrid.split(':')
                 hybridPredicates.append(URIRef(mapping[pref]+uri))
         
-        if options.method == 'gms':
-            for goal in goals:
-                goalSeed=AdornLiteral(goal).makeMagicPred()
-                print >>sys.stderr,"Magic seed fact (used in bottom-up evaluation)",goalSeed
-                magicSeeds.append(goalSeed.toRDFTuple())
-            if noMagic:
-                print >>sys.stderr,"Predicates whose magic sets will not be calculated"
-                for p in noMagic:
-                    print >>sys.stderr,"\t", factGraph.qname(p)
-            for rule in MagicSetTransformation(
-                                       factGraph,
-                                       ruleSet,
-                                       goals,
-                                       derivedPreds=bottomUpDerivedPreds,
-                                       strictCheck=nameMap[options.strictness],
-                                       defaultPredicates=(defaultBasePreds,
-                                                          defaultDerivedPreds),
-                                       noMagic=noMagic):
-                magicRuleNo+=1
-                network.buildNetworkFromClause(rule)
-            if len(list(ruleSet)):
-                print >>sys.stderr,"reduction in size of program: %s (%s -> %s clauses)"%(
-                                           100-(float(magicRuleNo)/float(len(list(ruleSet))))*100,
-                                           len(list(ruleSet)),
-                                           magicRuleNo)
-            start = time.time()
-            network.feedFactsToAdd(generateTokenSet(magicSeeds))
-            if not [rule for rule in factGraph.adornedProgram if len(rule.sip)]:
-                warnings.warn("Using GMS sideways information strategy with no "+
-                              "information to pass from query.  Falling back to "+
-                              "naive method over given facts and rules")
-                network.feedFactsToAdd(workingMemory)
-            sTime = time.time() - start
-            if sTime > 1:
-                sTimeStr = "%s seconds"%sTime
-            else:
-                sTime = sTime * 1000
-                sTimeStr = "%s milli seconds"%sTime
-            print >>sys.stderr, "Time to calculate closure on working memory: ",sTimeStr                                 
-
-            if options.output == 'rif':
-                print >>sys.stderr,"Rules used for bottom-up evaluation"
-                if network.rules:
-                    for clause in network.rules:
-                        print >>sys.stderr,clause                    
-                else:
-                    for clause in factGraph.adornedProgram:
-                        print >>sys.stderr,clause
-            if options.output == 'conflict':
-                network.reportConflictSet()
-                        
-        elif options.method == 'bfp':
             topDownDPreds = defaultDerivedPreds
             if options.builtinTemplates:
                 builtinTemplateGraph = Graph().parse(options.builtinTemplates,
@@ -550,7 +483,7 @@ def main():
                             templateMap = builtinDict,
                             nsBindings=network.nsMap,
                             identifyHybridPredicates = 
-                            options.hybrid if options.method == 'bfp' else False,
+                        options.hybrid,
                             hybridPredicates = hybridPredicates)
             targetGraph = Graph(topDownStore)
             for pref,nsUri in network.nsMap.items():
@@ -570,7 +503,7 @@ def main():
                     sTime = sTime * 1000
                     sTimeStr = "%s milli seconds"%sTime
                 print >>sys.stderr,\
-    "Time to reach answer ground goal answer of %s: %s"%(result.askAnswer[0],sTimeStr)
+"Time to reach answer ground goal answer of %s: %s"%(result.askAnswer[0],sTimeStr)
             else:
                 for rt in result:
                     sTime = time.time() - start
@@ -583,39 +516,17 @@ def main():
                         break
                     print >>sys.stderr,\
         "Time to reach answer %s via top-down SPARQL sip strategy: %s"%(rt,sTimeStr)
-            if options.output == 'conflict' and options.method == 'bfp':
+        if options.output == 'conflict':
                 for _network,_goal in topDownStore.queryNetworks:
                     print >>sys.stderr, _network, _goal
                     _network.reportConflictSet(options.debug)
                 for query in topDownStore.edbQueries:
                     print >>sys.stderr,query.asSPARQL()
 
-    elif options.method == 'naive':
-        start = time.time()                  
-        network.feedFactsToAdd(workingMemory)
-        sTime = time.time() - start
-        if sTime > 1:
-            sTimeStr = "%s seconds"%sTime
-        else:
-            sTime = sTime * 1000
-            sTimeStr = "%s milli seconds"%sTime
-        print >>sys.stderr,"Time to calculate closure on working memory: ",sTimeStr
-        print >>sys.stderr, network
-        if options.output == 'conflict':
-            network.reportConflictSet()            
-                                    
     for fileN in options.filter:
         for rule in HornFromN3(fileN):
             network.buildFilterNetworkFromClause(rule)
 
-    if options.negation and network.negRules and options.method in ['both',
-                                                                    'bottomUp']:
-        now=time.time()      
-        rt=network.calculateStratifiedModel(factGraph)
-        print >>sys.stderr,\
-        "Time to calculate stratified, stable model (inferred %s facts): %s"%(
-                                    rt,
-                                    time.time()-now)                
     if options.filter:
         print >>sys.stderr,"Applying filter to entailed facts"
         network.inferredFacts = network.filteredFacts

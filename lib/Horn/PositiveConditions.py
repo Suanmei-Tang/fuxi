@@ -13,6 +13,7 @@ from rdflib.util import first
 from rdflib.Collection import Collection
 from rdflib.Graph import ConjunctiveGraph,QuotedGraph,ReadOnlyGraphAggregate, Graph
 from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib.syntax.xml_names import split_uri
 
 OWL    = Namespace("http://www.w3.org/2002/07/owl#")
 
@@ -283,6 +284,57 @@ class Equal(QNameManager,Atomic):
 def BuildUnitermFromTuple((s,p,o),newNss=None):
     return Uniterm(p,[s,o],newNss)
 
+def compute_qname(uri,revNsMap):
+    namespace, name = split_uri(uri)
+    namespace = URIRef(namespace)
+    prefix = revNsMap.get(namespace)
+    if prefix is None:
+        prefix = "_%s" % len(revNsMap)
+        revNsMap[namespace]=prefix
+    return (prefix, namespace, name)
+
+def normalizeUri(rdfTerm,revNsMap):
+    """
+    Takes an RDF Term and 'normalizes' it into a QName (using the registered prefix)
+    or (unlike compute_qname) the Notation 3 form for URIs: <...URI...>
+    """
+    try:
+        namespace, name = split_uri(rdfTerm)
+        namespace = URIRef(namespace)
+    except:
+        if isinstance(rdfTerm,Variable):
+            return "?%s"%rdfTerm
+        else:
+            try:
+                qNameParts = compute_qname(rdfTerm,revNsMap)
+                return ':'.join([qNameParts[0],qNameParts[-1]])
+            except:
+                for ns in revNsMap:
+                    if rdfTerm.find(ns)+1:
+                        return ':'.join([revNsMap[ns],rdfTerm.split(ns)[-1]])
+                return "<%s>"%rdfTerm
+    prefix = revNsMap.get(namespace)
+    if prefix is None and isinstance(rdfTerm,Variable):
+        return "?%s"%rdfTerm
+    else:
+        qNameParts = compute_qname(rdfTerm,revNsMap)
+        return ':'.join([qNameParts[0],qNameParts[-1]])
+
+def renderTerm(graph,term):
+    if isinstance(term,URIRef):
+        return normalizeUri(term,hasattr(graph,'revNsMap') and graph.revNsMap or\
+                                  dict([(u,p) for p,u in graph.namespaces()]))
+    elif isinstance(term,Literal):
+        return term.n3()
+    else:
+        try:
+            if isinstance(term,BNode):
+                return term.n3()
+            else:
+                return graph.qname(term)
+        except:
+            return term.n3()
+
 class Uniterm(QNameManager,Atomic):
     """
     Uniterm ::= Const '(' TERM* ')'
@@ -299,6 +351,9 @@ class Uniterm(QNameManager,Atomic):
         self.arg = arg and arg or []
         QNameManager.__init__(self)
         if newNss is not None:
+            if isinstance(newNss,NamespaceManager):
+                self.nsMgr = newNss
+            else:
             newNss = newNss.items() if isinstance(newNss,dict) else newNss
             for k,v in newNss:
                 self.nsMgr.bind(k,v)
@@ -494,7 +549,6 @@ class Uniterm(QNameManager,Atomic):
             return val
         
     def normalizeTerm(self,term):
-        from FuXi.SPARQL import renderTerm
         return renderTerm(Graph(namespace_manager=self.nsMgr),term)
 
     def getArity(self):
