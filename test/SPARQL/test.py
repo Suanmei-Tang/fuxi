@@ -39,7 +39,6 @@ SUPPORTED_ENTAILMENT=[
 ]
 
 COMPLETION_RULES = [
-    "paper-sparqldl-Q1-rdfs",
     "sparqldl-02"
 ]
 
@@ -47,9 +46,9 @@ SKIP={
     "rdf01" : "Quantification over predicates",
     "rdfs01": "Quantification over predicates",
     "rdf02" : "Reification",
-    "rdf10" : "Malformed test", #might be fixed
     "rdfs05": "Quantification over predicates (unary)",
-    "rdfs11": "Reflexivity of rdfs:subClassOf (?x -> rdfs:Container)"
+    "rdfs11": "Reflexivity of rdfs:subClassOf (?x -> rdfs:Container)",
+    "sparqldl-Q1"  : "Infinite loop?"
 }
 
 nsMap = {
