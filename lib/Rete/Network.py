@@ -11,12 +11,12 @@ The network :
     - stores inferred triples in provided triple source (an RDFLib graph) or a temporary IOMemory Graph by default
 
 """
-from itertools import izip,ifilter,chain
+from itertools import izip, ifilter, chain
 import time,sys
 from pprint import pprint
 from cStringIO import StringIO
 from Util import xcombine
-from BetaNode import BetaNode, LEFT_MEMORY, RIGHT_MEMORY, PartialInstanciation
+from BetaNode import BetaNode, LEFT_MEMORY, RIGHT_MEMORY, PartialInstantiation
 from AlphaNode import AlphaNode, ReteToken, SUBJECT, PREDICATE, OBJECT, BuiltInAlphaNode
 from BuiltinPredicates import FILTERS
 from FuXi.Horn import ComplementExpansion, DATALOG_SAFETY_NONE, \
@@ -26,13 +26,20 @@ from FuXi.Horn.PositiveConditions import Uniterm, SetOperator, Exists, Or, GetUt
 from FuXi.DLP import MapDLPtoNetwork,non_DHL_OWL_Semantics,IsaFactFormingConclusion
 from FuXi.DLP.ConditionalAxioms import AdditionalRules
 from Util import generateTokenSet,renderNetwork
-from rdflib import Variable, BNode, URIRef, Literal, Namespace,RDF,RDFS
+try:
+    from rdflib import __version__ as rdf__version__
+    from rdflib.collection import Collection
+    from rdflib.graph import ConjunctiveGraph, QuotedGraph, ReadOnlyGraphAggregate, Graph
+    from rdflib.namespace import NamespaceManager
+except ImportError:
+    from rdflib.Collection import Collection
+    from rdflib.Graph import ConjunctiveGraph,QuotedGraph,ReadOnlyGraphAggregate, Graph
+    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib import Namespace, RDF, RDFS, BNode, Variable, URIRef, Literal
 from rdflib.util import first
-from rdflib.Collection import Collection
-from rdflib.Graph import ConjunctiveGraph,QuotedGraph,ReadOnlyGraphAggregate, Graph
-from rdflib.syntax.NamespaceManager import NamespaceManager
 from ReteVocabulary import RETE_NS
 from RuleStore import N3RuleStore,N3Builtin, Formula
+
 OWL_NS    = Namespace("http://www.w3.org/2002/07/owl#")
 Any = None
 LOG = Namespace("http://www.w3.org/2000/10/swap/log#")
@@ -616,7 +623,6 @@ class ReteNetwork:
 #            print "\t\t",termComb,wme.alphaNetworkHash(termComb)
 #            print "\t\t",alphaNode
             alphaNode.activate(wme.unboundCopy())
-
     def feedFactsToAdd(self,tokenIterator):
         """
         Feeds the network an iterator of facts / tokens which are fed to the alpha nodes 

@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 """
 The language of positive RIF conditions determines what can appear as a body (the
@@ -7,13 +6,19 @@ The language of positive RIF conditions determines what can appear as a body (th
   bodies of such rules are conjunctions of atomic formulas without negation.
 """
 import itertools
-from rdflib import Variable, BNode, URIRef, Literal, Namespace,RDF,RDFS
-from rdflib.Literal import _XSD_NS
+from rdflib import Namespace, RDF, RDFS, Variable, BNode, Literal, URIRef
+try:
+    from rdflib.collection import Collection
+    from rdflib.graph import ConjunctiveGraph, QuotedGraph, ReadOnlyGraphAggregate, Graph
+    from rdflib.namespace import NamespaceManager
+    _XSD_NS = Namespace("http://www.w3.org/2001/XMLSchema#")
+except ImportError:
+    from rdflib.Collection import Collection
+    from rdflib.Graph import ConjunctiveGraph,QuotedGraph,ReadOnlyGraphAggregate, Graph
+    from rdflib.syntax.NamespaceManager import NamespaceManager
+    from rdflib.Literal import _XSD_NS
 from rdflib.util import first
-from rdflib.Collection import Collection
-from rdflib.Graph import ConjunctiveGraph,QuotedGraph,ReadOnlyGraphAggregate, Graph
-from rdflib.syntax.NamespaceManager import NamespaceManager
-from rdflib.syntax.xml_names import split_uri
+from rdflib.namespace import split_uri
 
 OWL    = Namespace("http://www.w3.org/2002/07/owl#")
 
@@ -100,10 +105,8 @@ class And(QNameManager,SetOperator,Condition):
         """
         return first(itertools.ifilter(lambda conj: conj.binds(var),
                                        self.formulae)) is not None
-
     def __getitem__(self, item):
         return self.formulae[item]
-
     def isSafeForVariable(self,var):
         """
         A variable, v is safe in a condition formula if and only if ..
@@ -283,7 +286,6 @@ class Equal(QNameManager,Atomic):
 
 def BuildUnitermFromTuple((s,p,o),newNss=None):
     return Uniterm(p,[s,o],newNss)
-
 def compute_qname(uri,revNsMap):
     namespace, name = split_uri(uri)
     namespace = URIRef(namespace)
@@ -423,7 +425,6 @@ class Uniterm(QNameManager,Atomic):
         return [self.op]+self.arg
             
     terms = property(_get_terms)
-
     def unify(self,otherLit):
         """
         Takes another (ground) Uniterm and returns the substitutions that need to be applied
@@ -600,6 +601,7 @@ class PredicateExtentFactory(object):
         self.newNss = newNss
         
     def term(self, name):
+        from FuXi.Syntax.infixOWL import Class
         return Class(URIRef(self + name))
 
     def __getitem__(self, args):

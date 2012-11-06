@@ -3,11 +3,19 @@ from FuXi.Rete.Proof import *
 from rdflib import RDFS, RDF, Variable
 from rdflib.util import first
 from rdflib.store import Store
-from rdflib.store.REGEXMatching import NATIVE_REGEX
-from rdflib.sparql.Algebra import *
-from rdflib.sparql.graphPattern import BasicGraphPattern
-from rdflib.sparql.bison.Query import Query
-from rdflib.Graph import Graph
+try: # Try the pure Python SPARQL implementation
+    from rdfextras.sparql.algebra import *
+    from rdfextras.sparql.graph import BasicGraphPattern
+    from rdfextras.sparql.query import Query
+    from rdflib.graph import Graph
+    from rdfextras.store.REGEXMatching import NATIVE_REGEX
+except ImportError: # Assume rdflib 2.4.2
+    from rdflib.sparql.Algebra import *
+    from rdflib.sparql.graphPattern import BasicGraphPattern
+    from rdflib.sparql.bison.Query import Query
+    from rdflib.Graph import Graph
+    from rdflib.store.REGEXMatching import NATIVE_REGEX
+
 from FuXi.DLP import DisjunctiveNormalForm
 from FuXi.Rete.Magic import *
 from FuXi.Rete.TopDown import *
@@ -32,7 +40,6 @@ SELECT DISTINCT ?rifUri {
     ?rifUri rif:usedWithProfile ent:Simple
 }
 """
-
 class TopDownSPARQLEntailingStore(Store):
     """
     A Store which uses FuXi's magic set "sip strategies" and the in-memory SPARQL Algebra
@@ -114,7 +121,6 @@ class TopDownSPARQLEntailingStore(Store):
             self._db     = store._db
         self.idb               = idb if idb else set()
         self.edb               = edb
-
         for rifUri in edb.query(RIF_REFERENCE_QUERY):
             try:
                 from FuXi.Horn.RIFCore import RIFCoreParser
@@ -136,7 +142,6 @@ class TopDownSPARQLEntailingStore(Store):
                 )
             if DEBUG:
                 pprint(list(self.idb))
-
         if derivedPredicates is None:
             self.derivedPredicates = list(DerivedPredicateIterator(self.edb,self.idb))
         else:
@@ -190,7 +195,6 @@ class TopDownSPARQLEntailingStore(Store):
             print >>sys.stderr, "Goal/Query: ", tp
             print >>sys.stderr, "Query was not ground" if isNotGround is not None else "Query was ground"
         rt=bfp.answers(debug=self.DEBUG)
-
         self.queryNetworks.append((bfp.metaInterpNetwork,tp))
         self.edbQueries.update(bfp.edbQueries)
         if isNotGround is not None:
@@ -203,7 +207,6 @@ class TopDownSPARQLEntailingStore(Store):
             bfp.metaInterpNetwork.reportConflictSet(True,sys.stderr)
             for query in self.edbQueries:
                 print >>sys.stderr, "Dispatched query against dataset: ", query.asSPARQL()
-
     def hybridPredQueryPreparation(self,tp):
         lit = BuildUnitermFromTuple(tp,newNss=self.nsBindings)
         op = GetOp(lit)
@@ -326,7 +329,6 @@ class TopDownSPARQLEntailingStore(Store):
                                             factGraph,
                                             bindings):
                             yield ansDict
-
         except StopIteration:
             yield bindings
             
@@ -389,7 +391,6 @@ class TopDownSPARQLEntailingStore(Store):
                     #Solve ground, derived goal directly
 
                     goal = self.hybridPredQueryPreparation(goal)
-
                     SetupDDLAndAdornProgram(
                         self.edb,
                         self.idb,
@@ -465,6 +466,7 @@ class TopDownSPARQLEntailingStore(Store):
                 triples.append(BuildUnitermFromTuple(pat[:3]))
                 vars.extend([term for term in pat[:3] 
                                 if isinstance(term,Variable)])
+
             vars = list(set(vars))
             query=RDFTuplesToSPARQL(triples,self.edb,vars=vars)
             graphNsMap = dict(self.edb.namespaces())

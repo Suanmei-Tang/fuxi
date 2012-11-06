@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # encoding: utf-8
 """
 BackwardFixpointProcedure.py
@@ -22,16 +21,23 @@ already been generated.
 
 """
 
-import sys, copy, os, unittest, copy
+import sys, unittest, copy
+from cStringIO import StringIO
 from pprint import pprint
-from rdflib import URIRef, RDF, RDFS, Namespace, Variable, Literal, URIRef, BNode
+
+try:
+    from rdflib.graph import ReadOnlyGraphAggregate
+    from rdflib.namespace import NamespaceManager
+except ImportError:
+    from rdflib.Graph import ReadOnlyGraphAggregate
+    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib import Literal, Namespace, RDF, Variable, URIRef
 from rdflib.util import first
-from rdflib.Graph import ReadOnlyGraphAggregate
+
 from FuXi.SPARQL import EDBQuery, EDBQueryFromBodyIterator, ConjunctiveQueryMemoize
 from FuXi.Rete.SidewaysInformationPassing import GetArgs, GetVariables, SIPRepresentation
-from FuXi.Horn.PositiveConditions import *
 from FuXi.Rete.SidewaysInformationPassing import iterCondition, GetOp
-from FuXi.Rete.BetaNode import ReteMemory, BetaNode, RIGHT_MEMORY, LEFT_MEMORY, collectVariables, PartialInstanciation
+from FuXi.Rete.BetaNode import ReteMemory, BetaNode, RIGHT_MEMORY, LEFT_MEMORY
 from FuXi.Rete.AlphaNode import AlphaNode, ReteToken, BuiltInAlphaNode
 from FuXi.Rete.Network import ReteNetwork, HashablePatternList, InferredGoal, iteritems
 from FuXi.Rete.Proof import MakeImmutableDict
@@ -40,7 +46,7 @@ from FuXi.Rete.Magic import AdornedRule, AdornedUniTerm, IsHybridPredicate, comp
 from FuXi.Rete.Util import generateTokenSet, selective_memoize
 from FuXi.Horn.HornRules import extractVariables, Clause
 from FuXi.Rete.RuleStore import N3Builtin, FILTERS
-from cStringIO import StringIO
+from FuXi.Horn.PositiveConditions import *
 
 BFP_NS   = Namespace('http://dx.doi.org/10.1016/0169-023X(90)90017-8#')
 BFP_RULE = Namespace('http://code.google.com/p/python-dlp/wiki/BFPSpecializedRule#')
@@ -184,7 +190,7 @@ class EvaluateExecution(object):
         return "Evaluate(%s %s)"%(
                     self.ruleNo,
                     self.bodyIdx)
-                    
+
 class ProofDerivationStepAction(object):
     def __init__(self, bfp, headLiteral,ruleIdx,bodyIdx):
         self.bfp = bfp
@@ -307,7 +313,6 @@ class QueryExecution(object):
                                         GetVariables(_qLit,
                                                      secondOrder=True)),
                                     specialBNodeHandling=self.bfp.specialBNodeHandling)
-
                 origQuery = _qLit.copy()
                 _qLit.ground(_bindings)
 
@@ -321,7 +326,6 @@ class QueryExecution(object):
                 #@TODO: Verify we don't always want to limit passing of
                 # intermediate query answers to just those relevant to head solns
 #                _qLit.returnVars = list(set(self.freeHeadVars).intersection(queryVars))
-
                 if self.bfp.debug:
                     print "%sQuery triggered for "%(
                         ' maximal db conjunction ' 
@@ -545,8 +549,8 @@ class BackwardFixpointProcedure(object):
                 sipCollection = [],
                 hybridPredicates = None,
                 debug = False,
-                specialBNodeHandling = None,
-                proofTrace = None,
+                pushDownMDBQ = True,
+                specialBNodeHandling = None):
                 nsBindings = None):
         self.proofTrace            = []
         self.derivationMap         = {}
@@ -569,7 +573,6 @@ class BackwardFixpointProcedure(object):
             u'bfp'  : BFP_NS, 
             u'rule' : BFP_RULE 
         }
-
         if nsBindings:
             self.namespaces.update(nsBindings)
 
@@ -608,9 +611,9 @@ class BackwardFixpointProcedure(object):
         answers collected along the way are added and returned
                 
         """
-        solutions = []
+        # solutions = []
         
-        queryOp = GetOp(self.goal)
+        # queryOp = GetOp(self.goal)
         if self.goal.isGround():
             #Mark ground goal so, production rule engine
             #halts when goal is inferred
@@ -752,7 +755,6 @@ class BackwardFixpointProcedure(object):
             #V_{j} = V_{j-1} UNION vars(Literal(..)) where j <> 0
             evalVars[(idx+1,bodyIdx+1)] = list(GetVariables(bodyLiteral,secondOrder=True)) +\
                                                evalVars[(idx+1,bodyIdx)]
-
             pattern = HashablePatternList(
                 [(BFP_RULE[str(idx+1)],
                   BFP_NS.evaluate,
@@ -763,7 +765,6 @@ class BackwardFixpointProcedure(object):
                      BFP_NS.evaluate,
                      Literal(bodyIdx)),
                  bodyLiteral.toRDFTuple()])
-
             if skipMDBQCount > 0:
                 #body literals in base connected components have
                 #c^k meta rules with no-op actions
@@ -772,7 +773,6 @@ class BackwardFixpointProcedure(object):
                 assert key not in termNodeCk.executeActions
                 def noOpAction(tNode, inferredTriple, token, binding, debug=False): pass
                 termNodeCk.executeActions[key] = (True,noOpAction)
-
                 skipMDBQCount -= 1
                 continue
             
@@ -791,7 +791,6 @@ class BackwardFixpointProcedure(object):
             #query invokation
             tNode = first(aNodeDk.descendentBetaNodes)
             assert len(aNodeDk.descendentBetaNodes) == 1
-
             newEvalMemory = SetupEvaluationBetaNode(tNode,rule,self.metaInterpNetwork)
             
             isBase = bodyLiteral.adornment is None if \
@@ -846,7 +845,6 @@ class BackwardFixpointProcedure(object):
                 termNodeCk = self.metaInterpNetwork.nodes[pattern2]
                 #Rule c^k
                 #evaluate(ruleNo,j+1,X) :- evaluate(ruleNo,j,X), bodyLiteral
-
                 if not isBase or not len(conjunct):
                     #We only associate an evaluate (or proof trace) action
                     # if this is *not* part of a connected base component
@@ -1059,6 +1057,7 @@ class BackwardFixpointProcedure(object):
                 proofAction=ProofDerivationStepAction(self,rule.formula.head,idx,conjunctLength)
                 bNode.executeActions[rule.formula.head.toRDFTuple()] = (False,proofAction)
                         
+
             self.productions.setdefault(GetOp(rule.formula.head),[]).append((idx,bNode))
 
             #Rule b^k
@@ -1291,14 +1290,13 @@ class BackwardFixpointProcedure(object):
     def makeAdornedRule(self,body,head):
         allVars = set()
         #first we identify body variables
-        bodyVars = set(reduce(lambda x,y:x+y,
-                              [ list(extractVariables(i,existential=False))
-                                        for i in iterCondition(body) ]))
-        #then we identify head variables
-        headVars = set(reduce(lambda x,y:x+y,
-                              [ list(extractVariables(i,existential=False))
-                                        for i in iterCondition(head) ]))
-
+        # bodyVars = set(reduce(lambda x,y:x+y,
+        #                       [ list(extractVariables(i,existential=False))
+        #                                 for i in iterCondition(body) ]))
+        # #then we identify head variables
+        # headVars = set(reduce(lambda x,y:x+y,
+        #                       [ list(extractVariables(i,existential=False))
+        #                                 for i in iterCondition(head) ]))
 
         return AdornedRule(Clause(body,head),declare=allVars)
 

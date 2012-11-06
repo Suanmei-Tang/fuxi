@@ -1,8 +1,15 @@
 """
 """
 from RuleStore import N3Builtin
-from rdflib import Variable, BNode,RDF,Variable,Literal,RDFS, URIRef, Namespace
-from rdflib.Graph import Graph 
+try:
+    from rdflib.graph import Graph
+except ImportError:
+    from rdflib.Graph import Graph 
+from rdflib import Namespace, RDF, RDFS, Literal, Variable, BNode, URIRef
+try:
+    set
+except NameError:
+    from sets import Set as set
 from ReteVocabulary import RETE_NS
 from Node import Node
 
@@ -362,4 +369,4 @@ def test():
     doctest.testmod()
 
 if __name__ == '__main__':
-    test()    
+    test()

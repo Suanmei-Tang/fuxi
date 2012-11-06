@@ -1,31 +1,37 @@
 from pprint import pprint, pformat
+try:
+    set
+except NameError:
+    from sets import Set as set
 from FuXi.Rete import *
 from FuXi.Syntax.InfixOWL import *
 from FuXi.Rete.AlphaNode import SUBJECT,PREDICATE,OBJECT,VARIABLE
 from FuXi.Rete.BetaNode import LEFT_MEMORY,RIGHT_MEMORY
-from FuXi.Rete.RuleStore import N3RuleStore, SetupRuleStore
+from FuXi.Rete.RuleStore import N3RuleStore
 from FuXi.Rete.Util import renderNetwork,generateTokenSet
 from FuXi.Horn.PositiveConditions import Uniterm, BuildUnitermFromTuple
-from FuXi.LP.BackwardFixpointProcedure import BackwardFixpointProcedure
-from FuXi.LP import IdentifyHybridPredicates
-from FuXi.SPARQL.BackwardChainingStore import * 
+from FuXi.SPARQL.BackwardChainingStore import TopDownSPARQLEntailingStore
 from FuXi.DLP.ConditionalAxioms import AdditionalRules
 from FuXi.Horn.HornRules import HornFromN3
 from FuXi.DLP import MapDLPtoNetwork, non_DHL_OWL_Semantics
 from FuXi.Rete.Magic import *
 from FuXi.Rete.SidewaysInformationPassing import *
-from FuXi.Rete.TopDown import PrepareSipCollection, SipStrategy
-from FuXi.SPARQL import RDFTuplesToSPARQL, EDBQuery
+from FuXi.Rete.TopDown import PrepareSipCollection, SipStrategy, RDFTuplesToSPARQL
 from FuXi.Rete.Proof import ProofBuilder, PML, GMP_NS
-from rdflib.Namespace import Namespace
-from rdflib import plugin,RDF,RDFS,URIRef,URIRef
-from rdflib.OWL import FunctionalProperty
+from rdflib import Namespace, RDF, RDFS, URIRef
+try:
+    from rdflib.graph import Graph, ReadOnlyGraphAggregate, ConjunctiveGraph
+    from rdfextras.sparql.parser import parse
+    from rdflib.namespace import NamespaceManager
+except ImportError:
+    from rdflib.Graph import Graph,ReadOnlyGraphAggregate,ConjunctiveGraph
+    from rdflib.syntax.NamespaceManager import NamespaceManager
+    from rdflib.sparql.parser import parse
+    RDF = str(RDF.RDFNS)
+    RDFS = str(RDFS.RDFSNS)
 from rdflib.store import Store
 from cStringIO import StringIO
-from rdflib.Graph import Graph,ReadOnlyGraphAggregate,ConjunctiveGraph
-from rdflib.syntax.NamespaceManager import NamespaceManager
 from glob import glob
-from rdflib.sparql.parser import parse
 import unittest, os, time, itertools
 
 RDFLIB_CONNECTION=''
@@ -51,12 +57,12 @@ queryNsMapping={'test':'http://metacognition.info/FuXi/test#',
                 'rdfs':'http://www.w3.org/2000/01/rdf-schema#',
                 'rdf':'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
                 'owl':OWL_NS,
-                'rdfs':RDF.RDFNS,
+                'rdfs':RDFS,
 }
 
 nsMap = {
-  u'rdfs' :RDFS.RDFSNS,
-  u'rdf'  :RDF.RDFNS,
+  u'rdfs' :RDFS,
+  u'rdf'  :RDF,
   u'rete' :RETE_NS,
   u'owl'  :OWL_NS,
   u''     :TEST_NS,
