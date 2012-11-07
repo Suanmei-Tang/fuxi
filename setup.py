@@ -77,7 +77,7 @@ config=dict(
         "FuXi.Syntax",
       ],
       package_data={'FuXi.Horn': ['rif-core-rdf.xsl','uri.xsl']},
-      install_requires = ['rdflib<3a',],#'telescope'],
+      install_requires = ['rdflib>2','rdfextras',],#'telescope'],
       license = "Apache",
       keywords = "python logic owl rdf dlp n3 rule reasoner",
       url = "http://code.google.com/p/python-dlp/wiki/FuXi",

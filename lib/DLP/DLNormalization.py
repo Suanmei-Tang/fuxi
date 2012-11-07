@@ -4,15 +4,9 @@
 Helper Functions for reducing DL axioms into a normal forms
 """
 from cStringIO import StringIO
-try:
-    from rdflib.graph import Graph
-    from rdflib import Namespace, RDF, RDFS, URIRef, Variable, Literal, BNode
-    from rdflib.namespace import NamespaceManager
-except ImportError:
-    from rdflib.Graph import Graph
-    from rdflib import URIRef, RDF, RDFS, Namespace, Variable, Literal, URIRef, BNode
-    from rdflib.syntax.NamespaceManager import NamespaceManager
-
+from rdflib.graph import Graph
+from rdflib import Namespace, RDF, RDFS, URIRef, Variable, Literal, BNode
+from rdflib.namespace import NamespaceManager
 from rdflib.util import first
 from FuXi.Rete import ReteNetwork
 from FuXi.Rete.RuleStore import N3RuleStore

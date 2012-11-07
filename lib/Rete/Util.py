@@ -5,14 +5,9 @@ import itertools, pickle
 from FuXi.Rete.AlphaNode import AlphaNode        
 from rdflib import BNode, Namespace, Variable, URIRef
 from rdflib.util import first
-try:
-    from rdflib.graph import Graph
-    from rdflib.collection import Collection
-    from rdflib.namespace import NamespaceManager
-except ImportError:
-    from rdflib.Graph import Graph
-    from rdflib.Collection import Collection
-    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib.graph import Graph
+from rdflib.collection import Collection
+from rdflib.namespace import NamespaceManager
 try:    
     import boost.graph as bgl
     bglGraph = bgl.Digraph()
@@ -73,11 +68,11 @@ def CollapseDictionary(mapping):
     >>> len(a)
     2
     >>> a.values()
-    [rdflib.URIRef('http://example.com/'), rdflib.URIRef('http://example.com/')]
+    [rdflib.term.URIRef(u'http://example.com/'), rdflib.term.URIRef(u'http://example.com/')]
     >>> CollapseDictionary(a)
-    {'ex': rdflib.URIRef('http://example.com/')}
+    {'ex': rdflib.term.URIRef(u'http://example.com/')}
     >>> a
-    {'ex': rdflib.URIRef('http://example.com/'), '_1': rdflib.URIRef('http://example.com/')}
+    {'ex': rdflib.term.URIRef(u'http://example.com/'), '_1': rdflib.term.URIRef(u'http://example.com/')}
     """
     def originalPrefixes(item):
         return item.find('_')+1==1

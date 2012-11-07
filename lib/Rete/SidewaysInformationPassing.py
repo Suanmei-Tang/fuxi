@@ -14,12 +14,8 @@ from FuXi.Horn.HornRules import Ruleset
 from FuXi.Rete.RuleStore import SetupRuleStore, N3Builtin
 from FuXi.DLP import SKOLEMIZED_CLASS_NS
 from FuXi.DLP.Negation import ProperSipOrderWithNegation
-try:
-    from rdflib.collection import Collection
-    from rdflib.graph import Graph
-except ImportError:
-    from rdflib.Graph import Graph
-    from rdflib.Collection import Collection
+from rdflib.collection import Collection
+from rdflib.graph import Graph
 from rdflib import Namespace, BNode, Variable
 from rdflib.util import first
 
@@ -266,7 +262,7 @@ def BuildNaturalSIP(clause,
     
     >>> sip=BuildNaturalSIP(list(rs)[-1],[MAGIC.sg]) #doctest: +SKIP
     >>> list(sip.query('SELECT ?q {  ?prop a magic:SipArc . [] ?prop ?q . }',initNs={u'magic':MAGIC})) #doctest: +SKIP
-    [rdflib.URIRef('http://doi.acm.org/10.1145/28659.28689#sg'), rdflib.URIRef('http://doi.acm.org/10.1145/28659.28689#sg')]
+    [rdflib.term.URIRef(u'http://doi.acm.org/10.1145/28659.28689#sg'), rdflib.term.URIRef(u'http://doi.acm.org/10.1145/28659.28689#sg')]
     """
     from FuXi.Rete.Magic import AdornedUniTerm
     occurLookup={}

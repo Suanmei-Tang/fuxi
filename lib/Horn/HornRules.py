@@ -7,10 +7,7 @@ incorporates RIF Positive Conditions defined in Section Positive Conditions
 import itertools
 from FuXi.Horn.PositiveConditions import *
 from FuXi.Horn import DATALOG_SAFETY_NONE,DATALOG_SAFETY_STRICT, DATALOG_SAFETY_LOOSE
-try:
-    from rdflib.graph import Graph, ConjunctiveGraph
-except ImportError:
-    from rdflib.Graph import Graph, ConjunctiveGraph
+from rdflib.graph import Graph, ConjunctiveGraph
 from rdflib import Namespace, RDF, RDFS, Variable, BNode, URIRef, Literal
 
 def NetworkFromN3(n3Source,additionalBuiltins=None):

@@ -110,18 +110,11 @@ from rdflib import plugin
 from rdflib import Namespace, RDF, RDFS, URIRef, BNode, Literal, Variable
 from rdflib.util import first
 from rdflib.store import Store
-try:
-    from rdflib.term import Identifier
-    from rdflib.graph import Graph
-    from rdflib.collection import Collection
-    from rdflib.namespace import NamespaceManager
-    _XSD_NS = Namespace('http://www.w3.org/2001/XMLSchema#')
-except ImportError:
-    from rdflib.Literal import _XSD_NS
-    from rdflib.Identifier import Identifier
-    from rdflib.Graph import Graph
-    from rdflib.Collection import Collection
-    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib.term import Identifier
+from rdflib.graph import Graph
+from rdflib.collection import Collection
+from rdflib.namespace import NamespaceManager
+_XSD_NS = Namespace('http://www.w3.org/2001/XMLSchema#')
 
 """
 From: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/384122
@@ -1461,7 +1454,7 @@ class Restriction(Class):
         >>> restr1.serialize(g2)
         >>> Individual.factoryGraph = g2
         >>> list(Property(EX.someProp,baseType=None).type)
-        [rdflib.URIRef('http://www.w3.org/2002/07/owl#DatatypeProperty')]
+        [rdflib.term.URIRef(u'http://www.w3.org/2002/07/owl#DatatypeProperty')]
         """
         Property(self.onProperty,graph=self.graph,baseType=None).serialize(graph)
         for s,p,o in self.graph.triples((self.identifier,None,None)):

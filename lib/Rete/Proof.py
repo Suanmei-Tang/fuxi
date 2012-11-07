@@ -26,12 +26,8 @@ from BetaNode import BetaNode, LEFT_MEMORY, RIGHT_MEMORY, PartialInstantiation, 
 from FuXi.Rete.RuleStore import N3Builtin
 from FuXi.Rete.AlphaNode import AlphaNode, ReteToken
 from FuXi.Rete.Network import _mulPatternWithSubstitutions
-try:
-    from rdflib.graph import Graph
-    from rdflib.namespace import NamespaceManager
-except ImportError:
-    from rdflib.Graph import Graph
-    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib.graph import Graph
+from rdflib.namespace import NamespaceManager
 from rdflib import Namespace, BNode, Variable
 from pprint import pprint, pformat
 

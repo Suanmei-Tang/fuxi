@@ -21,12 +21,8 @@ from FuXi.Rete.Proof import *
 from FuXi.Rete.Util import selective_memoize, lazyGeneratorPeek
 from rdflib import URIRef, RDF, Namespace, Variable
 from rdflib.util import first
-try:
-    from rdflib.graph import ReadOnlyGraphAggregate
-    from rdflib.namespace import split_uri
-except ImportError:
-    from rdflib.Graph import ReadOnlyGraphAggregate
-    from rdflib.syntax.xml_names import split_uri
+from rdflib.graph import ReadOnlyGraphAggregate
+from rdflib.namespace import split_uri
 from FuXi.Rete.SidewaysInformationPassing import *
 from FuXi.SPARQL import EDBQuery, normalizeBindingsAndQuery
 

@@ -26,15 +26,10 @@ from FuXi.Horn.PositiveConditions import Uniterm, SetOperator, Exists, Or, GetUt
 from FuXi.DLP import MapDLPtoNetwork,non_DHL_OWL_Semantics,IsaFactFormingConclusion
 from FuXi.DLP.ConditionalAxioms import AdditionalRules
 from Util import generateTokenSet,renderNetwork
-try:
-    from rdflib import __version__ as rdf__version__
-    from rdflib.collection import Collection
-    from rdflib.graph import ConjunctiveGraph, QuotedGraph, ReadOnlyGraphAggregate, Graph
-    from rdflib.namespace import NamespaceManager
-except ImportError:
-    from rdflib.Collection import Collection
-    from rdflib.Graph import ConjunctiveGraph,QuotedGraph,ReadOnlyGraphAggregate, Graph
-    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib import __version__ as rdf__version__
+from rdflib.collection import Collection
+from rdflib.graph import ConjunctiveGraph, QuotedGraph, ReadOnlyGraphAggregate, Graph
+from rdflib.namespace import NamespaceManager
 from rdflib import Namespace, RDF, RDFS, BNode, Variable, URIRef, Literal
 from rdflib.util import first
 from ReteVocabulary import RETE_NS

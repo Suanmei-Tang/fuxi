@@ -9,12 +9,8 @@ import urllib2, warnings
 from cStringIO import StringIO
 from amara.lib import iri,inputsource
 from amara.xslt  import transform
-try:
-    from rdflib.graph import Graph
-    from rdflib.collection import Collection
-except ImportError:
-    from rdflib.Graph import Graph
-    from rdflib.Collection import Collection
+from rdflib.graph import Graph
+from rdflib.collection import Collection
 from rdflib import Namespace, RDF, Variable, URIRef
 from rdflib.util import first
 from FuXi.Rete.RuleStore import N3Builtin

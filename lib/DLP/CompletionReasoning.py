@@ -30,12 +30,7 @@ from FuXi.Horn.HornRules               import HornFromN3
 from FuXi.Rete.RuleStore               import SetupRuleStore
 from FuXi.SPARQL.BackwardChainingStore import TopDownSPARQLEntailingStore
 from rdflib                            import RDF, RDFS, OWL, URIRef, Variable, BNode, Namespace
-try:
-    from rdflib.graph                  import Graph
-except ImportError:
-    from rdflib.Graph                  import Graph
-    RDF = str(RDF.RDFNS)
-    RDFS = str(RDFS.RDFSNS)
+from rdflib.graph                  import Graph
 from rdflib import RDF, RDFS, Namespace, Variable, Literal, URIRef, BNode
 from rdflib.util import first
 from cStringIO                         import StringIO

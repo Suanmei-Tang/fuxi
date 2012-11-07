@@ -25,12 +25,8 @@ import sys, unittest, copy
 from cStringIO import StringIO
 from pprint import pprint
 
-try:
-    from rdflib.graph import ReadOnlyGraphAggregate
-    from rdflib.namespace import NamespaceManager
-except ImportError:
-    from rdflib.Graph import ReadOnlyGraphAggregate
-    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib.graph import ReadOnlyGraphAggregate
+from rdflib.namespace import NamespaceManager
 from rdflib import Literal, Namespace, RDF, Variable, URIRef
 from rdflib.util import first
 

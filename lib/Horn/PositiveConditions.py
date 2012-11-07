@@ -7,16 +7,10 @@ The language of positive RIF conditions determines what can appear as a body (th
 """
 import itertools
 from rdflib import Namespace, RDF, RDFS, Variable, BNode, Literal, URIRef
-try:
-    from rdflib.collection import Collection
-    from rdflib.graph import ConjunctiveGraph, QuotedGraph, ReadOnlyGraphAggregate, Graph
-    from rdflib.namespace import NamespaceManager, split_uri
-    _XSD_NS = Namespace("http://www.w3.org/2001/XMLSchema#")
-except ImportError:
-    from rdflib.Collection import Collection
-    from rdflib.Graph import ConjunctiveGraph,QuotedGraph,ReadOnlyGraphAggregate, Graph
-    from rdflib.syntax.NamespaceManager import NamespaceManager
-    from rdflib.Literal import _XSD_NS
+from rdflib.collection import Collection
+from rdflib.graph import ConjunctiveGraph, QuotedGraph, ReadOnlyGraphAggregate, Graph
+from rdflib.namespace import NamespaceManager, split_uri
+_XSD_NS = Namespace("http://www.w3.org/2001/XMLSchema#")
 from rdflib.util import first
 
 
@@ -420,7 +414,7 @@ class Uniterm(QNameManager,Atomic):
         >>> x = Variable('X')
         >>> lit = Uniterm(RDF.type,[RDFS.comment,x])
         >>> lit.terms
-        [rdflib.URIRef('http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), rdflib.URIRef('http://www.w3.org/2000/01/rdf-schema#comment'), ?X]
+        [rdflib.term.URIRef(u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type'), rdflib.term.URIRef(u'http://www.w3.org/2000/01/rdf-schema#comment'), ?X]
         """
         return [self.op]+self.arg
             

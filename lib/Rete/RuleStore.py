@@ -2,16 +2,10 @@ from __future__ import generators
 import sys
 from rdflib import Namespace, RDF, BNode, Literal, URIRef, Variable
 from rdflib.store import Store,VALID_STORE, CORRUPTED_STORE, NO_STORE, UNKNOWN
-try:
-    from rdflib.graph import QuotedGraph, Graph
-    from rdflib.namespace import NamespaceManager
-    from rdfextras.utils.termutils import *
-    from rdfextras.store.REGEXMatching import REGEXTerm, NATIVE_REGEX, PYTHON_REGEX
-except ImportError:
-    from rdflib.Graph import QuotedGraph, Graph
-    from rdflib.syntax.NamespaceManager import NamespaceManager
-    from rdflib.term_utils import *
-    from rdflib.store.REGEXMatching import REGEXTerm, NATIVE_REGEX, PYTHON_REGEX
+from rdflib.graph import QuotedGraph, Graph
+from rdflib.namespace import NamespaceManager
+from rdfextras.utils.termutils import *
+from rdfextras.store.REGEXMatching import REGEXTerm, NATIVE_REGEX, PYTHON_REGEX
 
 from pprint import pprint
 from cStringIO import StringIO
@@ -156,7 +150,7 @@ class N3RuleStore(Store):
     >>> print len(s.rules[0][RULE_RHS])
     5
     >>> print s.rules[0][RULE_LHS][1]
-    (?X, rdflib.URIRef('http://metacognition.info/FuXi/test#prop1'), ?M)
+    (?X, rdflib.term.URIRef(u'http://metacognition.info/FuXi/test#prop1'), ?M)
     >>> print s.rules[0][RULE_LHS][-1]
     <http://www.w3.org/2000/10/swap/math#equalTo>(?N,3)
 

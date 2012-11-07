@@ -2,18 +2,6 @@ from cStringIO import StringIO
 from rdflib import URIRef, RDF, RDFS, Namespace, Variable, Literal, URIRef
 from FuXi.Syntax.InfixOWL import OWL_NS
 from FuXi.Horn.HornRules import HornFromN3
-try:
-    from rdflib import plugin, query
-    rdflib_version = 3
-    plugin.register(
-            'sparql', query.Processor,
-            'rdfextras.sparql.processor', 'Processor')
-
-    plugin.register(
-            'sparql', query.Result,
-            'rdfextras.sparql.query', 'SPARQLQueryResult')
-except ImportError:
-    rdflib_version = 2
 
 LIST_MEMBERSHIP_SEMANTICS=\
 """
@@ -77,14 +65,9 @@ def AdditionalRules(tBox):
     """
     ruleSrc = set()
     addListSemantics = False
-    if rdflib_version == 3:
-        if tBox.query(FUNCTIONAL_PROPERTIES,
-                      initNs={"owl":OWL_NS}).askAnswer:
-            ruleSrc.add(FUNCTIONAL_SEMANTICS)
-    else:
-        if tBox.query(FUNCTIONAL_PROPERTIES,
-                      initNs={"owl":OWL_NS}).askAnswer[0]:
-            ruleSrc.add(FUNCTIONAL_SEMANTICS)
+    if tBox.query(FUNCTIONAL_PROPERTIES,
+                  initNs={"owl":OWL_NS}).askAnswer:
+        ruleSrc.add(FUNCTIONAL_SEMANTICS)
     if (None,OWL_NS.oneOf,None) in tBox:
         ruleSrc.add(NOMINAL_SEMANTICS)
         addListSemantics = True

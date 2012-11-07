@@ -28,12 +28,8 @@ except NameError:
 from itertools import izip
 from ReteVocabulary import RETE_NS
 
-try:
-    from rdflib.graph import QuotedGraph, Graph
-    from rdflib.collection import Collection
-except ImportError:
-    from rdflib.Graph import QuotedGraph, Graph
-    from rdflib.Collection import Collection
+from rdflib.graph import QuotedGraph, Graph
+from rdflib.collection import Collection
 from rdflib import Variable, Literal, URIRef, BNode, Namespace, RDF, RDFS
 from rdflib.util import first
 _XSD_NS = Namespace('http://www.w3.org/2001/XMLSchema#')

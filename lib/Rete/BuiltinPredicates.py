@@ -3,10 +3,7 @@ See: http://www.w3.org/2000/10/swap/doc/CwmBuiltins
 """
 import unittest
 from cStringIO import StringIO
-try:
-    from rdflib.graph import Graph, ReadOnlyGraphAggregate, ConjunctiveGraph
-except ImportError:
-    from rdflib.Graph import Graph,ReadOnlyGraphAggregate,ConjunctiveGraph
+from rdflib.graph import Graph, ReadOnlyGraphAggregate, ConjunctiveGraph
 from rdflib.util import first
 
 from rdflib import Namespace, Variable, Literal, URIRef

@@ -18,18 +18,11 @@ from FuXi.Rete.TopDown import *
 from FuXi.Rete.Proof import ProofBuilder, PML, GMP_NS
 from FuXi.Rete.Magic import *
 from FuXi.Rete.SidewaysInformationPassing import *
-try:
-    from rdflib.graph import Graph, ReadOnlyGraphAggregate, ConjunctiveGraph
-    from rdflib.namespace import NamespaceManager
-    from rdfextras.sparql.components import Prolog
-    from rdfextras.sparql.parser import parse as ParseSPARQL
-    from rdfextras.sparql.algebra import ReduceGraphPattern
-except ImportError:
-    from rdflib.Graph import Graph, ReadOnlyGraphAggregate, ConjunctiveGraph
-    from rdflib.syntax.NamespaceManager import NamespaceManager
-    from rdflib.sparql.bison.Query import Prolog
-    from rdflib.sparql.bison.Processor import Parse as ParseSPARQL
-    from rdflib.sparql.Algebra import ReduceGraphPattern
+from rdflib.graph import Graph, ReadOnlyGraphAggregate, ConjunctiveGraph
+from rdflib.namespace import NamespaceManager
+from rdfextras.sparql.components import Prolog
+from rdfextras.sparql.parser import parse as ParseSPARQL
+from rdfextras.sparql.algebra import ReduceGraphPattern
 from rdflib import plugin, RDF, RDFS, URIRef, Literal, Variable, Namespace
 from rdflib.store import Store
 from cStringIO import StringIO

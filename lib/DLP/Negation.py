@@ -3,12 +3,8 @@
 Stratified Negation Semantics for DLP using SPARQL to handle the negation
 """
 from pprint import pprint
-try:
-    from rdflib.graph import Graph
-    from rdflib.namespace import NamespaceManager
-except ImportError:
-    from rdflib.Graph import Graph
-    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib.graph import Graph
+from rdflib.namespace import NamespaceManager
 from rdflib import Namespace, RDF, RDFS, Variable, Literal, URIRef, BNode
 from rdflib.util import first
 from FuXi.Rete.RuleStore import N3RuleStore,SetupRuleStore

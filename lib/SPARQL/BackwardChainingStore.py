@@ -3,20 +3,11 @@ from FuXi.Rete.Proof import *
 from rdflib import RDFS, RDF, Variable
 from rdflib.util import first
 from rdflib.store import Store
-try: # Try the pure Python SPARQL implementation
-    from rdfextras.sparql.algebra import *
-    from rdfextras.sparql.graph import BasicGraphPattern
-    from rdfextras.sparql.query import Query
-    from rdflib.graph import Graph
-    from rdfextras.store.REGEXMatching import NATIVE_REGEX
-except ImportError: # Assume rdflib 2.4.2
-    from rdflib.sparql.Algebra import *
-    from rdflib.sparql.graphPattern import BasicGraphPattern
-    from rdflib.sparql.bison.Query import Query
-    from rdflib.Graph import Graph
-    from rdflib.store.REGEXMatching import NATIVE_REGEX
-    RDF = str(RDF.RDFNS)
-    RDFS = str(RDFS.RDFSNS)
+from rdfextras.sparql.algebra import *
+from rdfextras.sparql.graph import BasicGraphPattern
+from rdfextras.sparql.query import Query
+from rdflib.graph import Graph
+from rdfextras.store.REGEXMatching import NATIVE_REGEX
 from FuXi.DLP import DisjunctiveNormalForm
 from FuXi.Rete.Magic import *
 from FuXi.Rete.TopDown import *
@@ -360,10 +351,10 @@ class TopDownSPARQLEntailingStore(Store):
         The default 'native' SPARQL implementation is based on sparql-p's expansion trees
         layered on top of the read-only RDF APIs of the underlying store 
         """
-        from rdflib.sparql.Algebra import TopEvaluate
-        from rdflib.QueryResult import QueryResult
+        from rdfextras.sparql.algebra import TopEvaluate
+        from rdfextras.query import SPARQLQueryResult as QueryResult
         from rdflib import plugin
-        from rdflib.sparql.bison.Query import AskQuery
+        from rdfextras.sparql.components import AskQuery
         _expr = self.isaBaseQuery(None,queryObj)
         if isinstance(queryObj.query,AskQuery) and \
            isinstance(_expr,BasicGraphPattern):

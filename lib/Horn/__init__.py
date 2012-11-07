@@ -1,11 +1,7 @@
 import unittest, os, time, sys
 from FuXi.Syntax.InfixOWL import *
-try:
-    from rdflib.graph import Graph, ReadOnlyGraphAggregate, ConjunctiveGraph
-    from rdflib.namespace import NamespaceManager
-except ImportError:
-    from rdflib.Graph import Graph,ReadOnlyGraphAggregate,ConjunctiveGraph
-    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib.graph import Graph, ReadOnlyGraphAggregate, ConjunctiveGraph
+from rdflib.namespace import NamespaceManager
 from rdflib import RDF, RDFS, Literal, Variable, URIRef
 from rdflib import plugin
 from rdflib.util import first

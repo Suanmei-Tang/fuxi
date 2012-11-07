@@ -37,17 +37,11 @@ from FuXi.Syntax.InfixOWL import OWL_NS
 from cStringIO import StringIO
 from rdflib import URIRef, RDF, RDFS, Namespace, Variable, Literal
 from rdflib.util import first
-try:
-    from rdflib import Namespace, py3compat, RDF, URIRef, Variable
-    from rdflib.util import first
-    from rdflib.collection import Collection
-    from rdfextras.sparql.algebra import RenderSPARQLAlgebra
-    from rdfextras.sparql.parser import parse
-except ImportError:
-    from rdflib.Collection import Collection
-    from rdflib.Graph import Graph, ReadOnlyGraphAggregate
-    from rdflib.sparql.Algebra import RenderSPARQLAlgebra
-    from rdflib.sparql.parser import parse
+from rdflib import Namespace, py3compat, RDF, URIRef, Variable
+from rdflib.util import first
+from rdflib.collection import Collection
+from rdfextras.sparql.algebra import RenderSPARQLAlgebra
+from rdfextras.sparql.parser import parse
 from FuXi.Rete.SidewaysInformationPassing import *
 
 EX_ULMAN = Namespace('http://doi.acm.org/10.1145/6012.15399#')
@@ -627,14 +621,14 @@ def AdornLiteral(rdfTuple,newNss=None,naf = False):
     >>> query=RenderSPARQLAlgebra(parse(NON_LINEAR_MS_QUERY)) #doctest: +SKIP
     >>> literal=query.patterns[0][:3] #doctest: +SKIP
     >>> literal #doctest: +SKIP
-    (rdflib.URIRef('http://doi.acm.org/10.1145/6012.15399#john'), rdflib.URIRef('http://doi.acm.org/10.1145/6012.15399#sg'), ?X)
+    (rdflib.term.URIRef(u'http://doi.acm.org/10.1145/6012.15399#john'), rdflib.term.URIRef(u'http://doi.acm.org/10.1145/6012.15399#sg'), ?X)
     >>> aLit=AdornLiteral(literal,query.prolog.prefixBindings) #doctest: +SKIP
     >>> aLit #doctest: +SKIP
     mst:sg_bf(mst:john ?X)
     >>> aLit.adornment #doctest: +SKIP
     ['b', 'f']
     >>> aLit.getBindings(Uniterm(EX.sg,[Variable('X'),EX.jill])) #doctest: +SKIP
-    {?X: rdflib.URIRef('http://doi.acm.org/10.1145/6012.15399#john')}
+    {?X: rdflib.term.URIRef(u'http://doi.acm.org/10.1145/6012.15399#john')}
     """
     args=[rdfTuple[0],rdfTuple[-1]]
     newNss=newNss is None and {} or newNss
