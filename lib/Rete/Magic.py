@@ -622,17 +622,18 @@ def AdornLiteral(rdfTuple,newNss=None,naf = False):
     the other arguments free, where the bound arguments are those that are
     so indicated by the adornment.    
     
-    >>> EX=Namespace('http://doi.acm.org/10.1145/6012.15399#')
-    >>> query=RenderSPARQLAlgebra(parse(NON_LINEAR_MS_QUERY))
-    >>> literal=query.patterns[0][:3]
-    >>> literal
+    >>> from FuXi.Rete.LP.BackwardFixPointProcedure import HIGHER_ORDER_QUERY as NON_LINEAR_MS_QUERY
+    >>> EX=Namespace('http://doi.acm.org/10.1145/6012.15399#') #doctest: +SKIP
+    >>> query=RenderSPARQLAlgebra(parse(NON_LINEAR_MS_QUERY)) #doctest: +SKIP
+    >>> literal=query.patterns[0][:3] #doctest: +SKIP
+    >>> literal #doctest: +SKIP
     (rdflib.URIRef('http://doi.acm.org/10.1145/6012.15399#john'), rdflib.URIRef('http://doi.acm.org/10.1145/6012.15399#sg'), ?X)
-    >>> aLit=AdornLiteral(literal,query.prolog.prefixBindings)
-    >>> aLit
+    >>> aLit=AdornLiteral(literal,query.prolog.prefixBindings) #doctest: +SKIP
+    >>> aLit #doctest: +SKIP
     mst:sg_bf(mst:john ?X)
-    >>> aLit.adornment
+    >>> aLit.adornment #doctest: +SKIP
     ['b', 'f']
-    >>> aLit.getBindings(Uniterm(EX.sg,[Variable('X'),EX.jill]))
+    >>> aLit.getBindings(Uniterm(EX.sg,[Variable('X'),EX.jill])) #doctest: +SKIP
     {?X: rdflib.URIRef('http://doi.acm.org/10.1145/6012.15399#john')}
     """
     args=[rdfTuple[0],rdfTuple[-1]]
