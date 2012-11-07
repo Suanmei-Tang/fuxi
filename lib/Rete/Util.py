@@ -200,14 +200,14 @@ def lazyGeneratorPeek(iterable,firstN=1):
     [2, 3]
     >>> a=(i for i in [1,2,3])
     >>> result = lazyGeneratorPeek(a)
-    >>> result  # doctest:+ELLIPSIS
+    >>> result  # doctest:+SKIP
     <generator object at ...>
     >>> result = list(result)
     >>> result
     [1, 2, 3]
-    >>> lazyGeneratorPeek((i for i in []))
-    >>> lazyGeneratorPeek(result,4)
-    >>> lazyGeneratorPeek(result,3) # doctest:+ELLIPSIS
+    >>> lazyGeneratorPeek((i for i in []))  # doctest:+SKIP
+    >>> lazyGeneratorPeek(result,4)  # doctest:+SKIP
+    >>> lazyGeneratorPeek(result,3)  # doctest:+SKIP
     <generator object at ...>
     """
     cnt = firstN
