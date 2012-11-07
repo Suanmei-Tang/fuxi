@@ -191,10 +191,10 @@ def StructuralTransformation(owlGraph,newOwlGraph):
     >>> revDict = dict([(v,k) for k,v in conceptMap.items()])
     >>> newGraph.bind('ex',EX,True)
     >>> Individual.factoryGraph = newGraph
-    >>> for c in AllClasses(newGraph):
-    ...     if c.identifier in revDict: print "## New concept for %s ##"%revDict[c.identifier]
-    ...     print c.__repr__(True)
-    ...     print "################################"
+    >>> for c in AllClasses(newGraph): #doctest: +SKIP
+    ...     if c.identifier in revDict: print "## New concept for %s ##"%revDict[c.identifier] #doctest: +SKIP
+    ...     print c.__repr__(True) #doctest: +SKIP
+    ...     print "################################" #doctest: +SKIP
     
     """
     FreshConcept = {}
@@ -224,29 +224,29 @@ def ProcessConcept(klass,owlGraph,FreshConcept,newOwlGraph):
     #determine if the concept is the left, right (or both)
     #operand of a subsumption axiom in the ontology
     location = WhichSubsumptionOperand(iD,owlGraph)
-    print repr(cls)
+    # print repr(cls)
     if isinstance(iD,URIRef):
         #An atomic concept?
         if location in [LEFT_SUBSUMPTION_OPERAND,BOTH_SUBSUMPTION_OPERAND]:
-            print "Original (atomic) concept appears in the left HS of a subsumption axiom"
+            # print "Original (atomic) concept appears in the left HS of a subsumption axiom"
             #If class is left operand of subsumption operator,
             #assert (in new OWL graph) that A_c subsumes the concept
             _cls   = Class(cls.identifier,graph=newOwlGraph)
             newCls += _cls
-            print "%s subsumes %s"%(newCls,_cls)
+            # print "%s subsumes %s"%(newCls,_cls)
         if location in [RIGHT_SUBSUMPTION_OPERAND,BOTH_SUBSUMPTION_OPERAND]:
-            print "Original (atomic) concept appears in the right HS of a subsumption axiom"
+            # print "Original (atomic) concept appears in the right HS of a subsumption axiom"
             #If class is right operand of subsumption operator,
             #assert that it subsumes A_c
             _cls = Class(cls.identifier,graph=newOwlGraph)
             _cls += newCls
-            print "%s subsumes %s"%(_cls,newCls)
+            # print "%s subsumes %s"%(_cls,newCls)
     elif isinstance(cls,Restriction):
         if location != NEITHER_SUBSUMPTION_OPERAND:
             #appears in at least one subsumption operator
 
             #An existential role restriction
-            print "Original (role restriction) appears in a subsumption axiom"
+            # print "Original (role restriction) appears in a subsumption axiom"
             role      = Property(cls.onProperty,graph=newOwlGraph)
                         
             fillerCls = ProcessConcept(
@@ -256,20 +256,20 @@ def ProcessConcept(klass,owlGraph,FreshConcept,newOwlGraph):
                             newOwlGraph)
             #leftCls is (role SOME fillerCls)
             leftCls  = role|some|fillerCls
-            print "let leftCls be %s"%leftCls
+            # print "let leftCls be %s"%leftCls
             if location in [LEFT_SUBSUMPTION_OPERAND,BOTH_SUBSUMPTION_OPERAND]:
                 #if appears as the left operand, we say A_c subsumes
                 #leftCls
                 newCls   += leftCls
-                print "%s subsumes leftCls"%newCls
+                # print "%s subsumes leftCls"%newCls
             if location in [RIGHT_SUBSUMPTION_OPERAND,BOTH_SUBSUMPTION_OPERAND]:
                 #if appears as right operand, we say left Cls subsumes A_c
                 leftCls  += newCls
-                print "leftCls subsumes %s"%newCls
+                # print "leftCls subsumes %s"%newCls
     else:
         assert isinstance(cls,BooleanClass),"Not ELH ontology: %r"%cls
         assert cls._operator == OWL_NS.intersectionOf,"Not ELH ontology"
-        print "Original conjunction (or boolean operator wlog ) appears in a subsumption axiom"
+        # print "Original conjunction (or boolean operator wlog ) appears in a subsumption axiom"
         #A boolean conjunction
         if location != NEITHER_SUBSUMPTION_OPERAND:
             members = [ProcessConcept(Class(c),
@@ -283,12 +283,12 @@ def ProcessConcept(klass,owlGraph,FreshConcept,newOwlGraph):
                 #if appears as the left operand, we say the new conjunction
                 #is subsumed by A_c
                 newCls     += newBoolean
-                print "%s subsumes %s"%(newCls,newBoolean)
+                # print "%s subsumes %s"%(newCls,newBoolean)
             if location in [RIGHT_SUBSUMPTION_OPERAND,BOTH_SUBSUMPTION_OPERAND]:
                 #if appears as the right operand, we say A_c is subsumed by
                 #the new conjunction
                 newBoolean += newCls
-                print "%s subsumes %s"%(newBoolean,newCls)
+                # print "%s subsumes %s"%(newBoolean,newCls)
     return newCls
 
 def createTestOntGraph():
