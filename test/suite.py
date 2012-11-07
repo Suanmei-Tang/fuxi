@@ -292,15 +292,15 @@ if __name__ == "__main__":
         print "Using unittest2 libraries.  CAUTION: these may not be compatible with your debugger.  See"
         print "\thttp://pydev.blogspot.com/2007/06/why-cant-pydev-debugger-work-with.html"
     testOWLoptions = testOWL.defaultOptions()
-    splash("testOWL with " + testOWLoptions.strategy)
+    # splash("testOWL with " + testOWLoptions.strategy)
     testOWL.runTests(testOWLoptions)
-    if options.variants:
-        testOWLoptions.strategy = "sld"
-        splash("testOWL with " + testOWLoptions.strategy)
-        testOWL.runTests(testOWLoptions)
-        testOWLoptions.strategy = "bfp"
-        splash("testOWL with "  + testOWLoptions.strategy)
-        testOWL.runTests(testOWLoptions)
+    # if options.variants:
+    #     testOWLoptions.strategy = "sld"
+    #     splash("testOWL with " + testOWLoptions.strategy)
+    #     testOWL.runTests(testOWLoptions)
+    #     testOWLoptions.strategy = "bfp"
+    #     splash("testOWL with "  + testOWLoptions.strategy)
+    #     testOWL.runTests(testOWLoptions)
     sys.__stderr__.flush()
 
     # Caution: for some reason external unit tests run properly only if run before embedded tests.
