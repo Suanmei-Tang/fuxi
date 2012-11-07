@@ -15,7 +15,8 @@ except ImportError: # Assume rdflib 2.4.2
     from rdflib.sparql.bison.Query import Query
     from rdflib.Graph import Graph
     from rdflib.store.REGEXMatching import NATIVE_REGEX
-
+    RDF = str(RDF.RDFNS)
+    RDFS = str(RDFS.RDFSNS)
 from FuXi.DLP import DisjunctiveNormalForm
 from FuXi.Rete.Magic import *
 from FuXi.Rete.TopDown import *
@@ -75,7 +76,7 @@ class TopDownSPARQLEntailingStore(Store):
         instance for top-down evaluation using this store
         
         >>> graph=Graph()
-        >>> topDownStore = TopDownSPARQLEntailingStore(graph.store,[RDFS.seeAlso],nsBindings={u'rdfs':RDFS.RDFSNS})
+        >>> topDownStore = TopDownSPARQLEntailingStore(graph.store,[RDFS.seeAlso],nsBindings={u'rdfs':RDFS})
         >>> rt=topDownStore.isaBaseQuery("SELECT * { [] rdfs:seeAlso [] }")
         >>> isinstance(rt,(BasicGraphPattern,AlgebraExpression))
         True
