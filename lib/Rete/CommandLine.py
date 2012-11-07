@@ -251,7 +251,7 @@ def main():
     
     namespace_manager = NamespaceManager(Graph())
     if options.sparqlEndpoint:
-        factGraph = Graph(plugin.get('SPARQL',Store)(facts[0])) 
+        factGraph = Graph(plugin.get('SPARQLStore',Store)(facts[0])) 
         options.hybrid = False
     else:
         factGraph = Graph() 
