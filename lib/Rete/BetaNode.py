@@ -35,6 +35,7 @@ except ImportError:
     from rdflib.Graph import QuotedGraph, Graph
     from rdflib.Collection import Collection
 from rdflib import Variable, Literal, URIRef, BNode, Namespace, RDF, RDFS
+from rdflib.util import first
 _XSD_NS = Namespace('http://www.w3.org/2001/XMLSchema#')
 OWL_NS    = Namespace("http://www.w3.org/2002/07/owl#")
 Any = None
@@ -176,7 +177,7 @@ class PartialInstantiation(object):
     >>> token = ReteToken((URIRef('urn:uuid:Boo'),RDF.type,URIRef('urn:uuid:Foo')))
     >>> token = token.bindVariables(aNode)
     >>> PartialInstantiation([token])    
-    <PartialInstantiation: Set([<ReteToken: X->urn:uuid:Boo,C->urn:uuid:Foo>])>
+    <PartialInstantiation: set([<ReteToken: X->urn:uuid:Boo,C->urn:uuid:Foo>])>
     >>> for token in PartialInstantiation([token]):
     ...   print token
     <ReteToken: X->urn:uuid:Boo,C->urn:uuid:Foo>
@@ -268,7 +269,7 @@ class PartialInstantiation(object):
         >>> token2 = ReteToken((URIRef('urn:uuid:Foo'),RDF.type,URIRef('urn:uuid:Boo')))
         >>> inst = PartialInstantiation([token1.bindVariables(aNode),token2.bindVariables(aNode)])
         >>> inst    
-        <PartialInstantiation: Set([<ReteToken: S->urn:uuid:Boo,P->http://www.w3.org/1999/02/22-rdf-syntax-ns#type,O->urn:uuid:Foo>, <ReteToken: S->urn:uuid:Foo,P->http://www.w3.org/1999/02/22-rdf-syntax-ns#type,O->urn:uuid:Boo>])>
+        <PartialInstantiation: set([<ReteToken: S->urn:uuid:Boo,P->http://www.w3.org/1999/02/22-rdf-syntax-ns#type,O->urn:uuid:Foo>, <ReteToken: S->urn:uuid:Foo,P->http://www.w3.org/1999/02/22-rdf-syntax-ns#type,O->urn:uuid:Boo>])>
         """
         self.tokens.add(token)        
         if not noPostProcessing:
@@ -332,7 +333,7 @@ class PartialInstantiation(object):
         >>> token1
         <ReteToken: P1->http://www.w3.org/2000/01/rdf-schema#domain,P2->http://www.w3.org/2000/01/rdf-schema#domain>
         >>> newInst
-        <PartialInstantiation (joined on ?P2): Set([<ReteToken: P1->http://www.w3.org/2000/01/rdf-schema#domain,P2->http://www.w3.org/2000/01/rdf-schema#domain>, <ReteToken: P1->http://www.w3.org/2000/01/rdf-schema#domain>, <ReteToken: P2->http://www.w3.org/2000/01/rdf-schema#domain>])>
+        <PartialInstantiation (joined on ?P2): set([<ReteToken: P1->http://www.w3.org/2000/01/rdf-schema#domain,P2->http://www.w3.org/2000/01/rdf-schema#domain>, <ReteToken: P1->http://www.w3.org/2000/01/rdf-schema#domain>, <ReteToken: P2->http://www.w3.org/2000/01/rdf-schema#domain>])>
         >>> pprint(list(newInst.tokens))
         [<ReteToken: P1->http://www.w3.org/2000/01/rdf-schema#domain,P2->http://www.w3.org/2000/01/rdf-schema#domain>,
          <ReteToken: P1->http://www.w3.org/2000/01/rdf-schema#domain>,
@@ -439,7 +440,7 @@ class BetaNode(Node):
     >>> class NetworkStub:
     ...     def __init__(self):
     ...         self.firings = 0
-    ...         self.conflictSet = Set()
+    ...         self.conflictSet = set()
     ...     def fireConsequent(self,tokens,termNode,debug):
     ...         self.firings += 1
     ...         self.conflictSet.add(tokens)
@@ -463,18 +464,18 @@ class BetaNode(Node):
     Propagated from <AlphaNode: (u'X', u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', u'Y'). Feeds 1 beta nodes>
     (u'urn:uuid:Foo', u'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', u'urn:uuid:Baz')
     <BetaNode : CommonVariables: [u'X'] (2 in left, 1 in right memories)>.propagate(right,None,<ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>)
-    activating with <PartialInstantiation (joined on ?X): Set([<ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>
+    activating with <PartialInstantiation (joined on ?X): set([<ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>
     
     Add the remaining 3 tokens (each fires the network)
     
     >>> aNode2.activate(token4.unboundCopy())
     >>> list(joinNode3.memories[LEFT_MEMORY])[0]
-    <PartialInstantiation (joined on ?X): Set([<ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>
-    >>> aNode3.activate(token5.unboundCopy()))
+    <PartialInstantiation (joined on ?X): set([<ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>
+    >>> aNode3.activate(token5.unboundCopy())
     Propagated from <AlphaNode: (u'Z', u'urn:uuid:Prop1', u'W'). Feeds 1 beta nodes>
     (u'urn:uuid:Bar', u'urn:uuid:Prop1', u'urn:uuid:Beezle')
     <TerminalNode : CommonVariables: [] (1 in left, 1 in right memories)>.propagate(right,None,<ReteToken: Z->urn:uuid:Bar,W->urn:uuid:Beezle>)
-    activating with <PartialInstantiation (joined on ?X): Set([<ReteToken: Z->urn:uuid:Bar,W->urn:uuid:Beezle>, <ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>
+    activating with <PartialInstantiation (joined on ?X): set([<ReteToken: Z->urn:uuid:Bar,W->urn:uuid:Beezle>, <ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>
 
     >>> aNode3.activate(token6.unboundCopy())
     >>> joinNode3
@@ -482,7 +483,7 @@ class BetaNode(Node):
     >>> testHelper.firings
     2
     >>> pprint(testHelper.conflictSet)
-    Set([<PartialInstantiation (joined on ?X): Set([<ReteToken: Z->urn:uuid:Bar,W->urn:uuid:Beezle>, <ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>, <PartialInstantiation (joined on ?X): Set([<ReteToken: Z->urn:uuid:Bar,W->urn:uuid:Bundle>, <ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>])
+    set([<PartialInstantiation (joined on ?X): set([<ReteToken: Z->urn:uuid:Bar,W->urn:uuid:Beezle>, <ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>, <PartialInstantiation (joined on ?X): set([<ReteToken: Z->urn:uuid:Bar,W->urn:uuid:Bundle>, <ReteToken: X->urn:uuid:Foo>, <ReteToken: X->urn:uuid:Foo,Y->urn:uuid:Baz>])>])
     """
     def __init__(self,
                  leftNode,
