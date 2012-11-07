@@ -146,7 +146,8 @@ class GoalSolutionAction(object):
                 # as solution
                 self.bfp.goalSolutions.add(MakeImmutableDict(binding))
             if self.bfp.debug:
-                print "added %s to goal solutions"%binding
+                # print "added %s to goal solutions"%binding
+                pass
 
 class EvaluateExecution(object):
     """Handles the inference of evaluate literals in BFP"""

@@ -320,7 +320,8 @@ class AlphaNode(Node):
                 #self.relinked = True
                 memory.successor.leftUnlinkedNodes = set()
             if aReteToken.debug:
-                print "Added %s to %s"%(aReteToken,memory.successor)
+                # print "Added %s to %s"%(aReteToken,memory.successor)
+                pass
             if memory.successor.aPassThru or not memory.successor.checkNullActivation(memory.position):
                 if aReteToken.debug:
                     print "Propagated from %s"%(self)
@@ -331,7 +332,8 @@ class AlphaNode(Node):
                     memory.successor.propagate(memory.position,aReteToken.debug,wme=aReteToken)
             else:
                 if aReteToken.debug:
-                    print "skipped null right activation of %s from %s"%(memory.successor,self)
+                    # print "skipped null right activation of %s from %s"%(memory.successor,self)
+                    pass
                                 
 class BuiltInAlphaNode(AlphaNode):
     """

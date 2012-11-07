@@ -581,7 +581,8 @@ class ReteNetwork:
                         self.instantiations[termNode] = currIdx                            
                     else:
                         if debug:
-                            print "Inferred triple skipped: ", inferredTriple
+                            pass
+                            # print "Inferred triple skipped: ", inferredTriple
                         if executeFn:
                             #The indicated execute action is supposed to be triggered
                             #when the indicates RHS triple is inferred for the

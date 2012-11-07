@@ -592,14 +592,16 @@ class BetaNode(Node):
                 print "activating with %s"%(partInstOrList)
             if self.unlinkedMemory is not None:
                 if debug:
-                    print "adding %s into unlinked memory"%(partInstOrList)                
+                    # print "adding %s into unlinked memory"%(partInstOrList)                
+                    pass
                 self.unlinkedMemory.addToken(partInstOrList,debug)                
             for memory in self.descendentMemory:  
                 if debug:
-                    print "\t## %s memory ##"%memoryPosition[memory.position]
-                    print "\t",memory.successor
+                    # print "\t## %s memory ##"%memoryPosition[memory.position]
+                    # print "\t",memory.successor
                     if memory.successor.consequent:
-                        print "\t", memory.successor.clauseRepresentation()
+                        # print "\t", memory.successor.clauseRepresentation()
+                        pass
                 #print self,partInstOrList
                 memory.addToken(partInstOrList,debug)
                 if memory.successor.aPassThru or not memory.successor.checkNullActivation(memory.position):
@@ -649,13 +651,14 @@ class BetaNode(Node):
         """
         if debug and propagationSource:
             print "%s.propagate(%s,%s,%s)"%(self,memoryPosition[propagationSource],partialInst,wme)
-            print "### Left Memory ###"
-            pprint(list(self.memories[LEFT_MEMORY]))
-            print "###################"
-            print "### Right Memory ###"
-            pprint(list(self.memories[RIGHT_MEMORY]))
-            print "####################"
-            print self.clauseRepresentation()
+            # print "### Left Memory ###"
+            # pprint(list(self.memories[LEFT_MEMORY]))
+            # print "###################"
+            # print "### Right Memory ###"
+            # pprint(list(self.memories[RIGHT_MEMORY]))
+            # print "####################"
+            # print self.clauseRepresentation()
+            pass
         if self.aPassThru:
             if self.consequent:
                 if self.rightNode is None:
