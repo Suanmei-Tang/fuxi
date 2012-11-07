@@ -3,11 +3,7 @@
 import sys, unittest
 from pprint import pprint
 from cStringIO import StringIO
-try:
-    from rdflib import Graph, Namespace
-except ImportError:
-    from rdflib.Graph import Graph
-    from rdflib import Namespace
+from rdflib import Graph, Namespace
 from FuXi.Rete.RuleStore import SetupRuleStore
 from FuXi.Rete.Util import generateTokenSet
 from FuXi.DLP.DLNormalization import NormalFormReduction

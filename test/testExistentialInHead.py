@@ -1,9 +1,6 @@
 import unittest, os, time, sys 
 from cStringIO import StringIO 
-try:
-    from rdflib.graph import Graph
-except ImportError:
-    from rdflib.Graph import Graph 
+from rdflib.graph import Graph
 from rdflib.store import Store 
 from rdflib import plugin, Namespace, RDF, URIRef
 from FuXi.Rete import * 

@@ -4,10 +4,7 @@ from FuXi.Syntax.InfixOWL import *
 from FuXi.Rete.Network import ReteNetwork
 from FuXi.Rete.RuleStore import SetupRuleStore
 from FuXi.DLP import SKOLEMIZED_CLASS_NS
-try:
-    from rdflib.graph import Graph
-except ImportError:
-    from rdflib.Graph import Graph
+from rdflib.graph import Graph
 from rdflib import Namespace
 
 EX = Namespace('http://example.com#')

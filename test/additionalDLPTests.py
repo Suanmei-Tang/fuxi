@@ -1,10 +1,6 @@
 import sys, unittest, copy
-try:
-    from rdflib.graph import Graph
-    from rdflib.namespace import NamespaceManager
-except ImportError:
-    from rdflib.Graph import Graph
-    from rdflib.syntax.NamespaceManager import NamespaceManager
+from rdflib.graph import Graph
+from rdflib.namespace import NamespaceManager
 from rdflib import RDF, RDFS, Namespace, Variable, Literal, URIRef, BNode
 from rdflib.util import first
 from FuXi.Rete.RuleStore import N3RuleStore,SetupRuleStore
