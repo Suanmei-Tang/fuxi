@@ -24,7 +24,8 @@ from FuXi.Syntax.InfixOWL              import *
 from FuXi.DLP                          import SkolemizeExistentialClasses, \
                                               SKOLEMIZED_CLASS_NS, \
                                               LloydToporTransformation, \
-                                              makeRule
+                                              makeRule, \
+                                              non_DHL_OWL_Semantics as SUBSUMPTION_SEMANTICS
 from FuXi.Horn.HornRules               import HornFromN3
 from FuXi.Rete.RuleStore               import SetupRuleStore
 from FuXi.SPARQL.BackwardChainingStore import TopDownSPARQLEntailingStore
