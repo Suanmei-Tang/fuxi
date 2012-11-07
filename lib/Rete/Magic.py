@@ -616,7 +616,7 @@ def AdornLiteral(rdfTuple,newNss=None,naf = False):
     the other arguments free, where the bound arguments are those that are
     so indicated by the adornment.    
     
-    >>> from FuXi.Rete.LP.BackwardFixPointProcedure import HIGHER_ORDER_QUERY as NON_LINEAR_MS_QUERY
+    >>> from FuXi.LP.BackwardFixpointProcedure import HIGHER_ORDER_QUERY as NON_LINEAR_MS_QUERY
     >>> EX=Namespace('http://doi.acm.org/10.1145/6012.15399#') #doctest: +SKIP
     >>> query=RenderSPARQLAlgebra(parse(NON_LINEAR_MS_QUERY)) #doctest: +SKIP
     >>> literal=query.patterns[0][:3] #doctest: +SKIP
