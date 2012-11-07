@@ -259,7 +259,7 @@ class AlphaNode(Node):
         return "<AlphaNode: %s. Feeds %s beta nodes>"%(repr(self.triplePattern),len(self.descendentBetaNodes))
 
     def activate(self,aReteToken,explicitSuccessors2Activate=None):
-        from BetaNode import PartialInstanciation, LEFT_MEMORY, RIGHT_MEMORY, LEFT_UNLINKING
+        from BetaNode import PartialInstantiation, LEFT_MEMORY, RIGHT_MEMORY, LEFT_UNLINKING
         explicitSuccessors2Activate = [] if explicitSuccessors2Activate is None\
                                          else explicitSuccessors2Activate
         aReteToken.bindVariables(self)
@@ -268,7 +268,7 @@ class AlphaNode(Node):
                 if aReteToken.debug:
                     print "Skipping (per user specification) activation of join node: ", memory.successor
                 continue
-            singleToken = PartialInstanciation(
+            singleToken = PartialInstantiation(
                             [aReteToken],
                             consistentBindings=aReteToken.bindingDict.copy())
 #            print memory

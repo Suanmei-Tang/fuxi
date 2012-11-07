@@ -10,7 +10,7 @@ from rdflib import Namespace, RDF, RDFS, Variable, BNode, Literal, URIRef
 try:
     from rdflib.collection import Collection
     from rdflib.graph import ConjunctiveGraph, QuotedGraph, ReadOnlyGraphAggregate, Graph
-    from rdflib.namespace import NamespaceManager
+    from rdflib.namespace import NamespaceManager, split_uri
     _XSD_NS = Namespace("http://www.w3.org/2001/XMLSchema#")
 except ImportError:
     from rdflib.Collection import Collection
@@ -18,7 +18,7 @@ except ImportError:
     from rdflib.syntax.NamespaceManager import NamespaceManager
     from rdflib.Literal import _XSD_NS
 from rdflib.util import first
-from rdflib.namespace import split_uri
+
 
 OWL    = Namespace("http://www.w3.org/2002/07/owl#")
 
@@ -356,9 +356,9 @@ class Uniterm(QNameManager,Atomic):
             if isinstance(newNss,NamespaceManager):
                 self.nsMgr = newNss
             else:
-            newNss = newNss.items() if isinstance(newNss,dict) else newNss
-            for k,v in newNss:
-                self.nsMgr.bind(k,v)
+                newNss = newNss.items() if isinstance(newNss,dict) else newNss
+                for k,v in newNss:
+                    self.nsMgr.bind(k,v)
         self._hash=hash(reduce(lambda x,y:str(x)+str(y),
             len(self.arg)==2 and self.toRDFTuple() or [self.op]+self.arg))
         self.herbrand_hash=hash(

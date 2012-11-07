@@ -38,8 +38,9 @@ from cStringIO import StringIO
 from rdflib import URIRef, RDF, RDFS, Namespace, Variable, Literal
 from rdflib.util import first
 try:
+    from rdflib import Namespace, py3compat, RDF, URIRef, Variable
+    from rdflib.util import first
     from rdflib.collection import Collection
-    from rdflib.graph import Graph, ReadOnlyGraphAggregate
     from rdfextras.sparql.algebra import RenderSPARQLAlgebra
     from rdfextras.sparql.parser import parse
 except ImportError:

@@ -89,7 +89,7 @@ Enumerated classes can also be manipulated
 >>> EnumeratedClass(members=contList,graph=g)
 { ex:Africa ex:NorthAmerica }
 
-owl:Restrictions can also be instanciated:
+owl:Restrictions can also be instantiated:
 
 >>> Restriction(exNs.hasParent,graph=g,allValuesFrom=exNs.Human)
 ( ex:hasParent ONLY ex:Human )

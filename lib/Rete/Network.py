@@ -130,7 +130,7 @@ def _mulPatternWithSubstitutions(tokens,consequent,termNode):
     >>> token2 = ReteToken((URIRef('urn:uuid:beta'),OWL_NS.differentFrom,URIRef('urn:uuid:alpha')))
     >>> token1 = token1.bindVariables(aNode)
     >>> token2 = token2.bindVariables(aNode)
-    >>> inst = PartialInstanciation([token1,token2])
+    >>> inst = PartialInstantiation([token1,token2])
     """
     success = False
     for binding in tokens.bindings:        
@@ -190,7 +190,7 @@ class ReteNetwork:
         self.workingMemory = initialWorkingMemory and initialWorkingMemory or set()
         self.proofTracers = {}
         self.terminalNodes  = set()
-        self.instanciations = {}        
+        self.instantiations = {}        
         start = time.time()
         self.ruleStore=ruleStore
         self.justifications = {}
@@ -305,7 +305,7 @@ class ReteNetwork:
         import copy
         noNegFacts = 0
         for i in self.negRules:
-            #Evaluate the Graph pattern, and instanciate the head of the rule with 
+            #Evaluate the Graph pattern, and instantiate the head of the rule with 
             #the solutions returned
             nsMapping = dict([(v,k) for k,v in self.nsMap.items()])
             sel,compiler=StratifiedSPARQL(i,nsMapping)
@@ -401,12 +401,12 @@ class ReteNetwork:
     def reportConflictSet(self,closureSummary=False,stream=sys.stdout):
         tNodeOrder = [tNode 
                         for tNode in self.terminalNodes 
-                            if self.instanciations.get(tNode,0)]
-        tNodeOrder.sort(key=lambda x:self.instanciations[x],reverse=True)
+                            if self.instantiations.get(tNode,0)]
+        tNodeOrder.sort(key=lambda x:self.instantiations[x],reverse=True)
         for termNode in tNodeOrder:
             print >>stream,termNode
             print >>stream,"\t", termNode.clauseRepresentation()
-            print >>stream,"\t\t%s instanciations"%self.instanciations[termNode]
+            print >>stream,"\t\t%s instantiations"%self.instantiations[termNode]
         if closureSummary:        
             print >>stream ,self.inferredFacts.serialize(destination=stream,format='turtle')
                 
@@ -469,7 +469,7 @@ class ReteNetwork:
         self.proofTracers = {}
         self.terminalNodes  = set()
         self.justifications = {}
-        self._resetinstanciationStats()
+        self._resetinstantiationStats()
         self.workingMemory = set()
         self.dischargedBindings = {}
         
@@ -483,7 +483,7 @@ class ReteNetwork:
         self.proofTracers = {}
         self.inferredFacts = newinferredFacts if newinferredFacts is not None else Graph()
         self.workingMemory = set()
-        self._resetinstanciationStats()        
+        self._resetinstantiationStats()        
                                 
     def fireConsequent(self,tokens,termNode,debug=False):
         """
@@ -505,7 +505,7 @@ class ReteNetwork:
             print "%s from %s"%(tokens,termNode)
 
         newTokens = []
-        termNode.instanciatingTokens.add(tokens)
+        termNode.instantiatingTokens.add(tokens)
         def iterCondition(condition):
             if isinstance(condition,Exists):
                 return condition.formula
@@ -581,9 +581,9 @@ class ReteNetwork:
                             raise InferredGoal("Proved goal " + repr(self.goal))                    
                         self.inferredFacts.add(inferredTriple)
                         self.addWME(inferredToken)
-                        currIdx = self.instanciations.get(termNode,0)
+                        currIdx = self.instantiations.get(termNode,0)
                         currIdx+=1
-                        self.instanciations[termNode] = currIdx                            
+                        self.instantiations[termNode] = currIdx                            
                     else:
                         if debug:
                             print "Inferred triple skipped: ", inferredTriple
@@ -660,8 +660,8 @@ class ReteNetwork:
             node = BuiltInAlphaNode(N3Builtin(p,self.ruleStore.filters[p](s,o),s,o))
         return node
     
-    def _resetinstanciationStats(self):
-        self.instanciations = dict([(tNode,0) for tNode in self.terminalNodes])
+    def _resetinstantiationStats(self):
+        self.instantiations = dict([(tNode,0) for tNode in self.terminalNodes])
         
     def checkDuplicateRules(self):
         checkedClauses={}
@@ -760,7 +760,7 @@ class ReteNetwork:
                     terminalNode.headAtoms.update(rule.formula.head)
                     terminalNode.filter = aFilter
                     self.terminalNodes.add(terminalNode)
-                    self._resetinstanciationStats()                        
+                    self._resetinstantiationStats()                        
                 #self.checkDuplicateRules()
                 return terminalNode
             if HashablePatternList([currentPattern]) in self.nodes:

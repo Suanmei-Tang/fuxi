@@ -493,7 +493,7 @@ class BetaNode(Node):
                  executeActions=None,
                  ReteMemoryKind=ReteMemory):
         self.ReteMemoryKind = ReteMemoryKind
-        self.instanciatingTokens = set()
+        self.instantiatingTokens = set()
         self.aPassThru = aPassThru 
         self.name = BNode()
         self.network = None

@@ -286,7 +286,7 @@ class ProofBuilder(object):
                         assert isinstance(termVar,(Uniterm,N3Builtin))
                         a=[x for x in termVar.toRDFTuple() if isinstance(x,Variable) and x not in step.bindings]
                     binds=[]
-                    for t in tNode.instanciatingTokens:
+                    for t in tNode.instantiatingTokens:
                         binds.extend([project(binding,a) for binding in t.bindings])
                     binds=set([ImmutableDict([(k,v) for k,v in bind.items()]) for bind in binds])
                     assert len(binds)<2

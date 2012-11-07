@@ -404,7 +404,7 @@ class QueryExecution(object):
             else:
                 reduce(collectJoinVars,baseAtoms)
                 
-            #clone partially instanciated token, add to eval memory, and propagate 
+            #clone partially instantiated token, add to eval memory, and propagate 
             #the succesor join node
             tokenClone = token.copy()
 
@@ -483,7 +483,7 @@ def SetupEvaluationBetaNode(existingBetaNode,rule,network):
     Take a BetaNode (and a BFP rule) that joins values from an evaluate condition
     with other conditions and replace the alpha node (and memory) used
     to represent the condition with a pass-thru beta with no parent nodes
-    but whose right memory will be used to add bindings instanciated
+    but whose right memory will be used to add bindings instantiated
     from evaluate assertions in the BFP algorithm
     
       Rete Network
@@ -549,8 +549,8 @@ class BackwardFixpointProcedure(object):
                 sipCollection = [],
                 hybridPredicates = None,
                 debug = False,
-                pushDownMDBQ = True,
-                specialBNodeHandling = None):
+                specialBNodeHandling = None,
+                proofTrace = None,
                 nsBindings = None):
         self.proofTrace            = []
         self.derivationMap         = {}
@@ -665,7 +665,7 @@ class BackwardFixpointProcedure(object):
             lit.ground(binding)
             if isinstance(lit,AdornedUniTerm):
                 #A derived goal, so there must be one or more rules that were used to derive
-                #it, so we search for instanciations of rules for this derived goal
+                #it, so we search for instantiations of rules for this derived goal
                 derivations = [entry for entry in self.derivationMap.get(lit,set()) if entry[2] =='G']
                 if not len(derivations): 
                     #This doesn't match a Goal (G) step, so we must work the EDB query along
@@ -684,7 +684,7 @@ class BackwardFixpointProcedure(object):
                     for _ruleIdx in matchingRuleIndices:
                         _r = self.rules[_ruleIdx]
                         #For every (matching) rule, scan
-                        #for rule instanciations 
+                        #for rule instantiations 
                         for entry,value in self.derivationMap.items():
                             if [i for i in value 
                                  if i[2] in ['G','Q']] and GetOp(entry) == GetOp(lit):

@@ -38,7 +38,7 @@ def CalculateStratifiedModel(network,ontGraph,derivedPreds,edb=None):
         network.buildNetworkFromClause(rule)    
     network.feedFactsToAdd(generateTokenSet(edb and edb or ontGraph))
     for i in ignored:
-        #Evaluate the Graph pattern, and instanciate the head of the rule with 
+        #Evaluate the Graph pattern, and instantiate the head of the rule with 
         #the solutions returned
         sel,compiler=StratifiedSPARQL(i)
         query=compiler.compile(sel)
