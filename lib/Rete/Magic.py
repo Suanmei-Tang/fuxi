@@ -496,6 +496,13 @@ class AdornedUniTerm(Uniterm):
             naf=naf
         )
         self.isMagic=False
+        self.herbrand_hash=hash(
+            reduce(
+                lambda x,y:str(x)+str(y),
+                filter(lambda i:not isinstance(i,Variable),
+                    self.toRDFTuple() if len(self.arg)==2
+                    else [self.op]+self.arg),None)
+        ) ^ hash(reduce(lambda x,y:x+y,self.adornment))
 
     def clone(self):
         return AdornedUniTerm(self,self.adornment,self.naf)
@@ -635,7 +642,7 @@ def AdornLiteral(rdfTuple,newNss=None,naf = False):
     def isFreeTerm(term):
         return isinstance(term,Variable)
     adornment=[ isFreeTerm(term) and 'f' or 'b' for idx,term in enumerate(opArgs) ]
-    return AdornedUniTerm(uTerm,adornment,naf)  
+    return AdornedUniTerm(uTerm,adornment,naf)
 
 def DerivedPredicateIterator(factsOrBasePreds,
                              ruleset,

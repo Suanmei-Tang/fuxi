@@ -125,6 +125,9 @@ class GoalSolutionAction(object):
         Called when the BFP triggers a p-node associated with a goal
         , storing the solutions for later retrieval
         """
+        goalsFromUnification = self.bfp.goal.unify(
+            BuildUnitermFromTuple(inferredTriple)
+        )
         if not self.goalGroundTerms or not filter(
                 lambda (i,t): self.goalGroundTerms.get(i,t) != t,
                 enumerate(GetArgs(BuildUnitermFromTuple(inferredTriple)))
@@ -139,10 +142,10 @@ class GoalSolutionAction(object):
                             [(self.varMap[key],binding[key])
                                 for key in binding
                                   if key in self.varMap])))
-            else:
-                #If there are no variables to map, then pass on the bindings
-                # as solution
-                self.bfp.goalSolutions.add(MakeImmutableDict(binding))
+            elif set(goalsFromUnification):
+                #If there are no variables to map, then pass on the mappings
+                #resulting from the original goal with the inferred fact
+                self.bfp.goalSolutions.add(MakeImmutableDict(goalsFromUnification))
             if self.bfp.debug:
                 print "added %s to goal solutions"%binding
 
@@ -327,6 +330,7 @@ class QueryExecution(object):
                         ' maximal db conjunction ' 
                             if self.edbConj else ''), tNode.clauseRepresentation()
                     print _qLit.asSPARQL()
+
                 self.bfp.edbQueries.add(_qLit)
                 queryVars = origQuery.getOpenVars()
                 tokens2Propagate=[
@@ -357,7 +361,7 @@ class QueryExecution(object):
 
     @ConjunctiveQueryMemoize()
     def tabledQuery(self,conjQuery):
-        queryStr,rt = conjQuery.evaluate(self.bfp.debug)
+        queryStr,rt = conjQuery.evaluate(self.bfp.debug,toldBNode=self.bfp.toldBNode)
         if isinstance(rt,bool):
             yield rt
         else:
@@ -547,7 +551,9 @@ class BackwardFixpointProcedure(object):
                 debug = False,
                 specialBNodeHandling = None,
                 proofTrace = None,
-                nsBindings = None):
+                nsBindings = None,
+                toldBNode = False):
+        self.toldBNode             = toldBNode
         self.proofTrace            = []
         self.derivationMap         = {}
         self.queryAnswer2Atom      = {}
@@ -577,6 +583,8 @@ class BackwardFixpointProcedure(object):
                                                            newNss=self.namespaces)
 
         self.metaInterpNetwork     = network
+        self.metaInterpNetwork.nsMap.update(self.namespaces)
+
         self.derivedPredicates     = set(derivedPredicates) if \
            isinstance(derivedPredicates,list) else derivedPredicates
         self.hybridPredicates      = hybridPredicates if hybridPredicates else []
@@ -1082,7 +1090,7 @@ class BackwardFixpointProcedure(object):
                 vizNetwork.add_node(_len,attrs)
             
             #V_{0} = vars(query_p(..))
-            headQueryPred = list(iterCondition(_rule.formula.body))[0] 
+            headQueryPred = list(iterCondition(_rule.formula.body))[0]
             try:
                 evalVars[(idx+1,0)] = list(headQueryPred.terms)
             except IndexError:

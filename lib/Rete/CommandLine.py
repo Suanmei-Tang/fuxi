@@ -238,7 +238,7 @@ def main():
                   metavar='N3_DOC_PATH_OR_URI',
       help = 'The path to an N3 document associating SPARQL FILTER templates to '+
       'rule builtins')        
-    op.add_option('--normalForm', 
+    op.add_option('--normalForm',
                   action='store_true',
                   default=False,                
       help = 'Whether or not to reduce DL axioms & LP rules to a normal form')        
@@ -274,7 +274,7 @@ def main():
                     location=fileN,
                     debug=options.debug,
                     nsBindings=nsBinds)
-                rs = rif_parser.getRuleset()
+                rs,facts = rif_parser.getRuleset()
             except ImportError, e:
                 raise Exception(
                     "Missing 3rd party libraries for RIF processing: %s"%e
@@ -352,12 +352,12 @@ def main():
                                  ontGraph,
                                  addPDSemantics=options.pDSemantics,
                                  constructNetwork=False,
-                                 safety = safetyNameMap[options.safety]) 
+                                 safety = safetyNameMap[options.safety])
         ruleSet.formulae.extend(dlp)
     if options.output == 'rif' and not options.why:
         for rule in ruleSet:
             print rule
-        
+
     elif options.output == 'man-owl':
         cGraph = network.closureGraph(factGraph,readOnly=False)
         cGraph.namespace_manager = namespace_manager
@@ -462,66 +462,66 @@ def main():
                 pref,uri=hybrid.split(':')
                 hybridPredicates.append(URIRef(mapping[pref]+uri))
         
-            topDownDPreds = defaultDerivedPreds
-            if options.builtinTemplates:
-                builtinTemplateGraph = Graph().parse(options.builtinTemplates,
-                                                    format='n3')
-                builtinDict = dict([(pred,template)
-                              for pred,_ignore,template in 
-                                    builtinTemplateGraph.triples(
-                                        (None,
-                                         TEMPLATES.filterTemplate,
-                                         None))])
-            else:
-                builtinDict = None
-            topDownStore=TopDownSPARQLEntailingStore(
-                            factGraph.store,
-                            factGraph,
-                            idb=ruleSet,
-                            DEBUG=options.debug,
-                            derivedPredicates = topDownDPreds,
-                            templateMap = builtinDict,
-                            nsBindings=network.nsMap,
-                            identifyHybridPredicates = 
+        topDownDPreds = defaultDerivedPreds
+        if options.builtinTemplates:
+            builtinTemplateGraph = Graph().parse(options.builtinTemplates,
+                                                format='n3')
+            builtinDict = dict([(pred,template)
+                          for pred,_ignore,template in
+                                builtinTemplateGraph.triples(
+                                    (None,
+                                     TEMPLATES.filterTemplate,
+                                     None))])
+        else:
+            builtinDict = None
+        topDownStore=TopDownSPARQLEntailingStore(
+                        factGraph.store,
+                        factGraph,
+                        idb=ruleSet,
+                        DEBUG=options.debug,
+                        derivedPredicates = topDownDPreds,
+                        templateMap = builtinDict,
+                        nsBindings=network.nsMap,
+                        identifyHybridPredicates =
                         options.hybrid,
-                            hybridPredicates = hybridPredicates)
-            targetGraph = Graph(topDownStore)
-            for pref,nsUri in network.nsMap.items():
-                targetGraph.bind(pref,nsUri)      
-            start = time.time()                  
-            # queryLiteral = EDBQuery([BuildUnitermFromTuple(goal) for goal in goals],
-            #                         targetGraph)
-            # query = queryLiteral.asSPARQL()
-            # print >>sys.stderr, "Goal to solve ", query
+                        hybridPredicates = hybridPredicates)
+        targetGraph = Graph(topDownStore)
+        for pref,nsUri in network.nsMap.items():
+            targetGraph.bind(pref,nsUri)
+        start = time.time()
+        # queryLiteral = EDBQuery([BuildUnitermFromTuple(goal) for goal in goals],
+        #                         targetGraph)
+        # query = queryLiteral.asSPARQL()
+        # print >>sys.stderr, "Goal to solve ", query
+        sTime = time.time() - start
+        result = targetGraph.query(options.why,initNs=network.nsMap)
+        if result.askAnswer:
             sTime = time.time() - start
-            result = targetGraph.query(options.why,initNs=network.nsMap)
-            if result.askAnswer:
+            if sTime > 1:
+                sTimeStr = "%s seconds"%sTime
+            else:
+                sTime = sTime * 1000
+                sTimeStr = "%s milli seconds"%sTime
+            print >>sys.stderr,\
+"Time to reach answer ground goal answer of %s: %s"%(result.askAnswer[0],sTimeStr)
+        else:
+            for rt in result:
                 sTime = time.time() - start
                 if sTime > 1:
                     sTimeStr = "%s seconds"%sTime
                 else:
                     sTime = sTime * 1000
                     sTimeStr = "%s milli seconds"%sTime
+                if options.firstAnswer:
+                    break
                 print >>sys.stderr,\
-"Time to reach answer ground goal answer of %s: %s"%(result.askAnswer[0],sTimeStr)
-            else:
-                for rt in result:
-                    sTime = time.time() - start
-                    if sTime > 1:
-                        sTimeStr = "%s seconds"%sTime
-                    else:
-                        sTime = sTime * 1000
-                        sTimeStr = "%s milli seconds"%sTime
-                    if options.firstAnswer:
-                        break
-                    print >>sys.stderr,\
-        "Time to reach answer %s via top-down SPARQL sip strategy: %s"%(rt,sTimeStr)
+    "Time to reach answer %s via top-down SPARQL sip strategy: %s"%(rt,sTimeStr)
         if options.output == 'conflict':
-                for _network,_goal in topDownStore.queryNetworks:
-                    print >>sys.stderr, _network, _goal
-                    _network.reportConflictSet(options.debug)
-                for query in topDownStore.edbQueries:
-                    print >>sys.stderr,query.asSPARQL()
+            for _network,_goal in topDownStore.queryNetworks:
+                print >>sys.stderr, _network, _goal
+                _network.reportConflictSet(options.debug)
+            for query in topDownStore.edbQueries:
+                print >>sys.stderr,query.asSPARQL()
 
     for fileN in options.filter:
         for rule in HornFromN3(fileN):

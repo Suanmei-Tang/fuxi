@@ -325,7 +325,7 @@ def renderTerm(graph,term):
         return normalizeUri(term,hasattr(graph,'revNsMap') and graph.revNsMap or\
                                   dict([(u,p) for p,u in graph.namespaces()]))
     elif isinstance(term,Literal):
-        return term.n3()
+        return term._literal_n3(use_plain=True)
     else:
         try:
             if isinstance(term,BNode):
@@ -354,9 +354,9 @@ class Uniterm(QNameManager,Atomic):
             if isinstance(newNss,NamespaceManager):
                 self.nsMgr = newNss
             else:
-            newNss = newNss.items() if isinstance(newNss,dict) else newNss
-            for k,v in newNss:
-                self.nsMgr.bind(k,v)
+                newNss = newNss.items() if isinstance(newNss,dict) else newNss
+                for k,v in newNss:
+                    self.nsMgr.bind(k,v)
         self._hash=hash(reduce(lambda x,y:str(x)+str(y),
             len(self.arg)==2 and self.toRDFTuple() or [self.op]+self.arg))
         self.herbrand_hash=hash(

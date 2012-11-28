@@ -13,7 +13,7 @@ from rdflib.Graph import Graph
 from rdflib import Namespace, RDF, Variable, URIRef
 from rdflib.util import first
 from rdflib.Collection import Collection
-from FuXi.Rete.RuleStore import N3Builtin
+from FuXi.Rete.RuleStore import N3Builtin, SetupRuleStore
 from FuXi.Horn.PositiveConditions import *
 from FuXi.Horn.HornRules import Rule, Clause
 
@@ -32,6 +32,7 @@ class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
 
 RIF_NS = Namespace('http://www.w3.org/2007/rif#')
 XSD_NS = Namespace('http://www.w3.org/2001/XMLSchema#')
+ENT    = Namespace("http://www.w3.org/ns/entailment/")
 
 mimetypes = {
     'application/rdf+xml' : 'xml',
@@ -40,6 +41,14 @@ mimetypes = {
 }
 
 TRANSFORM_URI = iri.absolutize('rif-core-rdf.xsl',iri.os_path_to_uri(__file__))
+
+IMPORT_PARTS=\
+"""
+SELECT DISTINCT ?location ?profile {
+    []    a             rif:Import;
+          rif:location  ?location;
+          rif:profile   ?profile .
+}"""
 
 IMPLIES_PARTS=\
 """
@@ -108,10 +117,17 @@ SELECT ?atom ?args ?op {
 rif_namespaces = { u'rif':RIF_NS }
 
 class RIFCoreParser(object):
-    def __init__(self,location=None,graph=None,debug=False,nsBindings = None):
+    def __init__(self,
+                 location=None,
+                 graph=None,
+                 debug=False,
+                 nsBindings = None,
+                 owlEmbeddings = False):
+        self.owlEmbeddings = owlEmbeddings
         self.nsBindings = nsBindings if nsBindings else {}
         self.location = location
         self.rules = {}
+        self.debug = debug
         if graph:
             assert location is None,"Must supply one of graph or location"
             self.graph = graph
@@ -148,6 +164,33 @@ class RIFCoreParser(object):
                 if debug:
                     print "Extracted rules from RIF in RDF document"
         self.nsBindings.update(dict(self.graph.namespaces()))
+
+    def handleImport(self):
+        additionalRules = set()
+        additionalFacts = set()
+        for location,profile in self.graph.query(IMPORT_PARTS,
+                                                 initNs=rif_namespaces):
+            graph = []
+            if profile == ENT.RDF:
+                graph = Graph().parse(location)
+                additionalFacts.update(graph)
+                if self.debug:
+                    print "Importing RDF referenced from RIF document"
+            if profile == ENT['OWL-Direct'] and self.owlEmbeddings:
+                rule_store, rule_graph, network = SetupRuleStore(makeNetwork=True)
+                graph = Graph().parse(location)
+                additionalFacts.update(graph)
+                additionalRules.update(network.setupDescriptionLogicProgramming(
+                    graph,
+                    addPDSemantics=False,
+                    constructNetwork=False))
+                if self.debug:
+                    print "Embedded %s rules from %s (imported OWL 2 RL)"%(
+                        len(additionalRules),
+                        location
+                    )
+            print "Added %s RDF statements from RDF Graph"%(len(graph))
+        return additionalFacts,additionalRules
 
     def getRuleset(self):
         """
@@ -187,15 +230,28 @@ class RIFCoreParser(object):
                                for external,args,op in self.graph.query(
                                     EXTERNAL_PARTS,
                                     initNs=rif_namespaces) ])
-        rt = []
+        rt          = set()
+        groundFacts = set()
         for sentenceCollection in self.graph.objects(predicate=RIF_NS.sentences):
             col = Collection(self.graph,sentenceCollection)
             for sentence in col:
                 if RIF_NS.Implies in self.graph.objects(sentence,RDF.type):
-                    rt.append(self.extractImp(sentence))
+                    rt.add(self.extractImp(sentence))
                 elif RIF_NS.Forall in self.graph.objects(sentence,RDF.type):
-                    rt.append(self.extractRule(sentence))
-        return rt
+                    rt.add(self.extractRule(sentence))
+                elif RIF_NS.Frame in self.graph.objects(sentence,RDF.type):
+                    frames = self.extractFrame(sentence)
+                    for term in frames:
+                        if term.isGround():
+                            triple = term.toRDFTuple()
+                            if triple not in groundFacts:
+                                groundFacts.add(triple)
+        additionalFacts,additionalRules=self.handleImport()
+        if additionalRules:
+            rt.update(additionalRules)
+        if additionalFacts:
+            groundFacts.update(additionalFacts)
+        return list(rt),list(groundFacts)
 
     def extractImp(self,impl):
         body,bodyType,head,headType = self.implications[impl]

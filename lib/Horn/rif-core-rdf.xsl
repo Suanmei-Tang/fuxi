@@ -6,6 +6,7 @@
 <!DOCTYPE xsl:stylesheet [
   <!ENTITY rif  "http://www.w3.org/2007/rif#">
   <!ENTITY xs   "http://www.w3.org/2001/XMLSchema#">
+  <!ENTITY rdf  "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 ]>
 <xsl:stylesheet 
     version="1.0"
@@ -19,7 +20,7 @@
 	<xsl:template match="/">
 	    <xsl:apply-templates select="*" mode="class-element"/>
 	</xsl:template>
-	
+
 	<xsl:template match="rif:Var" mode="class-element">
 	    <xsl:copy>
 	       <rif:varname>
@@ -27,6 +28,10 @@
 	       </rif:varname>
 	    </xsl:copy>
 	</xsl:template>
+
+    <xsl:template match="text()" mode="class-element">
+        <xsl:value-of select="."/>
+    </xsl:template>
 
 	<xsl:template match="rif:Const" mode="class-element">
 	    <xsl:copy>
@@ -88,8 +93,8 @@
 	      <xsl:when test="local-name() != 'slot' and @ordered='yes'">
 	          <!-- Mode 0 -->
               <xsl:element name="{name()}" namespace="&rif;">
-                  <xsl:attribute 
-                       name="rdf:parseType" 
+                  <xsl:attribute
+                       name="rdf:parseType"
                        namespace="http://www.w3.org/1999/02/22-rdf-syntax-ns#">Collection</xsl:attribute>
                   <xsl:apply-templates select="*" mode="class-element" />
               </xsl:element>
@@ -105,7 +110,16 @@
 	      <xsl:otherwise>
 	          <!-- Mode 1 -->
 	          <xsl:copy>
-                  <xsl:apply-templates select="*" mode="class-element" />
+                  <xsl:choose>
+                      <xsl:when test="local-name() = 'location' or local-name() = 'profile'">
+                          <xsl:attribute name="rdf:resource" namespace="">
+                            <xsl:value-of select="."/>
+                          </xsl:attribute>
+                      </xsl:when>
+                      <xsl:otherwise>
+                          <xsl:apply-templates select="*|text()" mode="class-element" />
+                      </xsl:otherwise>
+                  </xsl:choose>
 	          </xsl:copy>
 	      </xsl:otherwise> 
 	    </xsl:choose>

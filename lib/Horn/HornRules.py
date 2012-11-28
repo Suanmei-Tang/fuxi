@@ -154,7 +154,29 @@ class Rule(object):
         self.nsMapping = nsMapping and nsMapping or {}
         self.formula = clause
         self.declare = declare and declare or []
-        
+
+    def normalizeQuantification(self,inBody=True):
+        from FuXi.Rete.SidewaysInformationPassing import GetArgs
+        if inBody:
+            bodyExistentials = filter(
+                lambda i:isinstance(i,BNode),
+                reduce(
+                    lambda l,r: l+r,
+                    map(
+                        GetArgs,
+                        iterCondition(self.formula.body)
+                    )
+                )
+            )
+            argMap = dict([(bnode,Variable(bnode))
+                            for bnode in bodyExistentials])
+            for literal in iterCondition(self.formula.body):
+                literal.renameVariables(argMap)
+        else:
+            raise NotImplementedError(
+                "normalizing existential in head not supported"
+            )
+
     def isSecondOrder(self):
         secondOrder = [pred 
             for pred in itertools.chain(iterCondition(self.formula.head),

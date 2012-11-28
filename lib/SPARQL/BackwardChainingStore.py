@@ -7,14 +7,14 @@ from rdflib.store.REGEXMatching import NATIVE_REGEX
 from rdflib.sparql.Algebra import *
 from rdflib.sparql.graphPattern import BasicGraphPattern
 from rdflib.sparql.bison.Query import Query
-from rdflib.Graph import Graph
+from rdflib.Graph import Graph, ConjunctiveGraph
 from FuXi.DLP import DisjunctiveNormalForm
 from FuXi.Rete.Magic import *
 from FuXi.Rete.TopDown import *
 from FuXi.Rete.Network import ReteNetwork
 from FuXi.Rete.SidewaysInformationPassing import *
 from FuXi.LP.BackwardFixpointProcedure import BackwardFixpointProcedure
-from FuXi.LP import IdentifyHybridPredicates
+from FuXi.LP import IdentifyHybridPredicates, BNodeSkolemizationAction
 from FuXi.Horn.PositiveConditions import BuildUnitermFromTuple
 from FuXi.Rete.Util import lazyGeneratorPeek
 
@@ -107,7 +107,13 @@ class TopDownSPARQLEntailingStore(Store):
                 nsBindings={},
                 templateMap = None,
                 identifyHybridPredicates = False,
-                hybridPredicates = None):
+                hybridPredicates = None,
+                existentialsInHeads = False,
+                toldBNode = False,
+                addRIFFacts = False,
+                embedOWL = False):
+        self.toldBNode         = toldBNode
+        self.existentialInHead = existentialsInHeads
         self.dataset = store
         hybridPredicates = hybridPredicates if hybridPredicates else []
         if hasattr(store,'_db'):
@@ -124,12 +130,30 @@ class TopDownSPARQLEntailingStore(Store):
                         ConjunctiveGraph(edb.store).contexts()):
                     if DEBUG:
                         print "RIF in RDF is in named graph %s"%rifUri.n3()
-                    rif_parser = RIFCoreParser(graph=Graph(edb.store,rifUri),debug=DEBUG)
+                    rif_parser = RIFCoreParser(
+                                    graph=Graph(edb.store,rifUri),
+                                    debug=DEBUG,
+                                    owlEmbeddings=embedOWL)
                 else:
                     if DEBUG:
                         print "RIF / XML is remote"
-                    rif_parser = RIFCoreParser(location=rifUri,debug=DEBUG)
-                self.idb.update(rif_parser.getRuleset())
+                    rif_parser = RIFCoreParser(
+                                    location=rifUri,
+                                    debug=DEBUG,
+                                    owlEmbeddings=embedOWL)
+                rules,facts = rif_parser.getRuleset()
+                if addRIFFacts and facts:
+                    #Add any ground facts in the referenced RIF graph
+                    #to the edb
+                    if DEBUG:
+                        print "Added %s statements from RIF document"%len(facts)
+                        print map(BuildUnitermFromTuple,facts)
+                    if isinstance(self.edb,ConjunctiveGraph):
+                        for fact in facts:
+                            self.edb.add(fact)
+                    else:
+                        self.edb.addN(map(lambda i:(i+(self.edb,)),facts))
+                self.idb.update(rules)
             except ImportError, e:
                 raise Exception(
                     "Missing 3rd party libraries for RIF processing: %s"%e
@@ -176,6 +200,7 @@ class TopDownSPARQLEntailingStore(Store):
         isNotGround = first(itertools.ifilter(lambda i:isinstance(i,Variable),
                                               tp))
         rule_store, rule_graph, network = SetupRuleStore(makeNetwork=True)
+        network.nsMap.update(self.nsBindings)
         bfp = BackwardFixpointProcedure(
                     factGraph,
                     network,
@@ -184,8 +209,11 @@ class TopDownSPARQLEntailingStore(Store):
                     sipCollection,
                     hybridPredicates=self.hybridPredicates,
                     debug=self.DEBUG,
-                    nsBindings=self.nsBindings)
+                    nsBindings=self.nsBindings,
+                    toldBNode = self.toldBNode)
         bfp.createTopDownReteNetwork(self.DEBUG)
+        if self.existentialInHead:
+            BNodeSkolemizationAction(network)
         if self.DEBUG:
             print >>sys.stderr, "Goal/Query: ", tp
             print >>sys.stderr, "Query was not ground" if isNotGround is not None else "Query was ground"
@@ -193,16 +221,17 @@ class TopDownSPARQLEntailingStore(Store):
 
         self.queryNetworks.append((bfp.metaInterpNetwork,tp))
         self.edbQueries.update(bfp.edbQueries)
-        if isNotGround is not None:
-            for item in bfp.goalSolutions:
-                yield item,None
-        else:
-            yield rt,None
         if debug:
             print >>sys.stderr, bfp.metaInterpNetwork
             bfp.metaInterpNetwork.reportConflictSet(True,sys.stderr)
             for query in self.edbQueries:
                 print >>sys.stderr, "Dispatched query against dataset: ", query.asSPARQL()
+
+        if isNotGround is not None:
+            for item in bfp.goalSolutions:
+                yield item,None
+        else:
+            yield rt,None
 
     def hybridPredQueryPreparation(self,tp):
         lit = BuildUnitermFromTuple(tp,newNss=self.nsBindings)
@@ -217,13 +246,16 @@ class TopDownSPARQLEntailingStore(Store):
         new_rules = map(copy.deepcopy,self.idb)
         ReplaceHybridPredcates(new_rules,self.hybridPredicates)
         for hybrid_predicate in self.hybridPredicates:
-            new_rules.append(
-                CreateHybridPredicateRule(
-                    hybrid_predicate,
-                    self.idb,
-                    self.nsBindings
-                )
+            new_rule = CreateHybridPredicateRule(
+                hybrid_predicate,
+                self.idb,
+                self.nsBindings
             )
+            if new_rule is None:
+                raise SyntaxError(
+                    "Problems handling hybrid predicate %s"%hybrid_predicate
+                )
+            new_rules.append(new_rule)
         new_derived_predicates = set([ i for i in self.derivedPredicates
                                    if i not in self.hybridPredicates ])
         new_derived_predicates.update(

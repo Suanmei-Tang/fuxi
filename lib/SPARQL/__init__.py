@@ -144,61 +144,75 @@ def RunQuery(subQueryJoin,
             vars=None,
             debug = False,
             symmAtomicInclusion = False,
-            specialBNodeHandling = None):
-   initialNs = hasattr(factGraph,'nsMap') and factGraph.nsMap or \
+            specialBNodeHandling = None,
+            toldBNode = False):
+    initialNs = hasattr(factGraph,'nsMap') and factGraph.nsMap or \
                dict([(k,v) for k,v in factGraph.namespaces()])
 
-   if not subQueryJoin:
-       return False
-   if not vars:
-       vars=[]
-   if bool(bindings):
-       #Apply a priori substitutions
-       openVars,conjGroundLiterals,bindings  = \
-               normalizeBindingsAndQuery(set(vars),
-                                         bindings,
-                                         subQueryJoin)
-       vars=list(openVars)
-   else:
-       conjGroundLiterals = subQueryJoin
-   isGround = not vars
-   subquery = RDFTuplesToSPARQL(conjGroundLiterals,
-                                factGraph,
-                                isGround,
-                                [v for v in vars],
-                                symmAtomicInclusion,
-                                specialBNodeHandling)
-   rt = factGraph.query(subquery,
-                        initNs = initialNs)#,
-                        #DEBUG = debug)
-   projectedBindings = vars and project(bindings,vars) or bindings
-   if isGround:
-       if debug:
-           print >>sys.stderr, "%s%s-> %s"%(
+    if not subQueryJoin:
+        return False
+    if not vars:
+        vars=[]
+    if bool(bindings):
+        #Apply a priori substitutions
+        openVars,conjGroundLiterals,bindings  = \
+                normalizeBindingsAndQuery(set(vars),
+                                          bindings,
+                                          subQueryJoin)
+        vars=list(openVars)
+    else:
+        conjGroundLiterals = subQueryJoin
+    isGround = not vars
+    subquery = RDFTuplesToSPARQL(conjGroundLiterals,
+                                 factGraph,
+                                 isGround,
+                                 [v for v in vars],
+                                 symmAtomicInclusion,
+                                 specialBNodeHandling)
+
+    if toldBNode:
+        from rdflib.sparql.bison.Query import Prolog
+        from rdflib.sparql.parser import parse
+        parsedQuery = parse(subquery)
+        if not parsedQuery.prolog:
+            parsedQuery.prolog = Prolog(None, [])
+
+        parsedQuery.prolog.toldBNodes = True
+        subquery = ''
+    else:
+        parsedQuery = None
+
+    rt = factGraph.query(subquery,
+                         initNs = initialNs,
+                         parsedQuery=parsedQuery)
+    projectedBindings = vars and project(bindings,vars) or bindings
+    if isGround:
+        if debug:
+            print >>sys.stderr, "%s%s-> %s"%(
                          subquery,
                          projectedBindings and 
                          " %s apriori binding(s)"%len(projectedBindings) or '',
                          rt.askAnswer[0])
-       return subquery,rt.askAnswer[0]
-   else:
-       rt = len(vars)>1 and ( 
-        dict([(vars[idx],
-               specialBNodeHandling[-1](i) 
-               if specialBNodeHandling and isinstance(i,BNode) 
-               else i) 
-                                      for idx,i in enumerate(v)]) 
-                                           for v in rt ) \
-              or ( dict([(vars[0],
-                          specialBNodeHandling[-1](v) 
+        return subquery,rt.askAnswer[0]
+    else:
+        rt = len(vars)>1 and (
+         dict([(vars[idx],
+                specialBNodeHandling[-1](i)
+                if specialBNodeHandling and isinstance(i,BNode)
+                else i)
+                                       for idx,i in enumerate(v)])
+                                            for v in rt ) \
+               or ( dict([(vars[0],
+                           specialBNodeHandling[-1](v)
                           if specialBNodeHandling and isinstance(v,BNode) else v)
                           ]) for v in rt )
-       if debug:
-           print >>sys.stderr, "%s%s-> %s"%(
+        if debug:
+            print >>sys.stderr, "%s%s-> %s"%(
                    subquery,
                    projectedBindings and 
                    " %s apriori binding(s)"%len(projectedBindings) or '',                                
                    rt and '[]')# .. %s answers .. ]'%len(rt) or '[]')
-       return subquery,rt
+        return subquery,rt
 
 def EDBQueryFromBodyIterator(factGraph,remainingBodyList,derivedPreds,hybridPredicates=None):
     hybridPredicates = hybridPredicates if hybridPredicates is not None else []
@@ -380,7 +394,10 @@ class EDBQuery(QNameManager,SetOperator,Condition):
         self.bindings = dict([(substitutions.get(k,k),v) 
                             for k,v in self.bindings.items()])
 
-    def evaluate(self,debug = False, symmAtomicInclusion = False):
+    def evaluate(self,
+                 debug = False,
+                 symmAtomicInclusion = False,
+                 toldBNode = False):
         import time, warnings
         from urllib2 import HTTPError
         from BaseHTTPServer import BaseHTTPRequestHandler 
@@ -394,7 +411,8 @@ class EDBQuery(QNameManager,SetOperator,Condition):
                               vars=self.returnVars,
                               debug = debug,
                               symmAtomicInclusion = symmAtomicInclusion,
-                              specialBNodeHandling=self.specialBNodeHandling)
+                              specialBNodeHandling=self.specialBNodeHandling,
+                              toldBNode=toldBNode)
                 return rt
             except Exception, e:# HTTPError, e:
                 #responseMsg = BaseHTTPRequestHandler.responses[e.code]
@@ -411,7 +429,7 @@ class EDBQuery(QNameManager,SetOperator,Condition):
                 
                 warnings.warn(
                 "Recieved HTTP error from server",
-                    RuntimeWarning,2)                
+                    RuntimeWarning,2)
                 time.sleep(1)
             else: # we tried, and we had no failure, so
                 break
