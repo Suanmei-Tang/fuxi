@@ -1,8 +1,6 @@
-# import ez_setup
-# ez_setup.use_setuptools()
 from setuptools  import setup
 setup(name="FuXi",
-      version="1.4",
+      version="1.4.1",
       description="An OWL / N3-based in-memory, logic reasoning system for RDF",
       author="Chime Ogbuji",
       author_email="chimezie@gmail.com",
