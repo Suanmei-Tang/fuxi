@@ -51,6 +51,11 @@ def main():
       help = 'Whether or not to serialize the inferred triples'+ 
              ' along with the original triples.  Otherwise '+
               '(the default behavior), serialize only the inferred triples')
+    op.add_option('--naive',
+                  action='store_true',
+                  default=False,
+      help = 'Naively perform forward chaining over rules and facts using the '+
+             'RETE network')
     op.add_option('--imports', 
                 action='store_true',
                 default=False,
@@ -321,7 +326,7 @@ def main():
     if options.normalForm:
         NormalFormReduction(factGraph)
 
-    if not options.sparqlEndpoint:
+    if not options.sparqlEndpoint and options.naive:
         workingMemory = generateTokenSet(factGraph)
     if options.builtins:
         import imp
@@ -531,17 +536,29 @@ def main():
         print >>sys.stderr,"Applying filter to entailed facts"
         network.inferredFacts = network.filteredFacts
 
-
-    if options.closure and options.output in RDF_SERIALIZATION_FORMATS:
-        cGraph = network.closureGraph(factGraph)
-        cGraph.namespace_manager = namespace_manager
-        print cGraph.serialize(destination=None, 
-                               format=options.output, 
-                               base=None)
-    elif options.output and options.output in RDF_SERIALIZATION_FORMATS:
-        print network.inferredFacts.serialize(destination=None, 
-                                              format=options.output, 
-                                              base=None)            
+    if options.naive:
+        start = time.time()
+        network.feedFactsToAdd(workingMemory)
+        sTime = time.time() - start
+        if sTime > 1:
+            sTimeStr = "%s seconds"%sTime
+        else:
+            sTime = sTime * 1000
+            sTimeStr = "%s milli seconds"%sTime
+        print >>sys.stderr,"Time to calculate closure on working memory: ",sTimeStr
+        print >>sys.stderr, network
+        if options.output == 'conflict':
+            network.reportConflictSet()
+        elif options.closure and options.output in RDF_SERIALIZATION_FORMATS:
+            cGraph = network.closureGraph(factGraph)
+            cGraph.namespace_manager = namespace_manager
+            print cGraph.serialize(destination=None,
+                                   format=options.output,
+                                   base=None)
+        elif options.output and options.output in RDF_SERIALIZATION_FORMATS:
+            print network.inferredFacts.serialize(destination=None,
+                                                  format=options.output,
+                                                  base=None)
 if __name__ == '__main__':
     from hotshot import Profile, stats
 #    import pycallgraph
